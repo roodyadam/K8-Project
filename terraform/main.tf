@@ -35,6 +35,11 @@ provider "aws" {
 # Data source for availability zones
 data "aws_availability_zones" "available" {
   state = "available"
+  # Filter to only EKS-supported zones (first 3 zones are typically supported)
+  filter {
+    name   = "zone-type"
+    values = ["availability-zone"]
+  }
 }
 
 # VPC Module
@@ -44,7 +49,8 @@ module "vpc" {
   project_name       = var.project_name
   environment        = var.environment
   vpc_cidr           = var.vpc_cidr
-  availability_zones = var.availability_zones != null ? var.availability_zones : data.aws_availability_zones.available.names
+  # Use explicit zones if provided, otherwise use first 3 available zones (EKS-supported)
+  availability_zones = var.availability_zones != null ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 3)
 
   enable_nat_gateway = var.enable_nat_gateway
   single_nat_gateway = var.single_nat_gateway

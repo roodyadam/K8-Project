@@ -59,6 +59,15 @@ jobs:
         working-directory: ./terraform
         run: terraform fmt -check -recursive
 
+      - name: Import Existing IAM Resources
+        working-directory: ./terraform
+        continue-on-error: true
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          terraform import module.iam.aws_iam_role.cluster eks-project-dev-eks-cluster-role || true
+          terraform import module.iam.aws_iam_role.node_group eks-project-dev-eks-node-group-role || true
+          terraform import module.iam.aws_iam_policy.cluster_autoscaler "arn:aws:iam::${ACCOUNT_ID}:policy/eks-project-dev-cluster-autoscaler-policy" || true
+
       - name: Terraform Plan
         working-directory: ./terraform
         run: terraform plan -no-color -out=tfplan

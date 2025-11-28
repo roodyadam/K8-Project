@@ -1,0 +1,1 @@
+arn:aws:iam::147923156682:role/eks-cluster-external-dns-role

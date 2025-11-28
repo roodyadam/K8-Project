@@ -1,0 +1,38 @@
+# Example Ingress resource with ExternalDNS and CertManager integration
+# This will automatically:
+# 1. Create DNS record in Route 53 (via ExternalDNS)
+# 2. Provision TLS certificate (via CertManager)
+# 3. Route traffic to your service
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eks-app-ingress
+  namespace: default
+  annotations:
+    # ExternalDNS annotation - automatically creates DNS record in Route 53
+    external-dns.alpha.kubernetes.io/hostname: eks.roodyadamsapp.com
+    # CertManager annotation - automatically provisions TLS certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # NGINX Ingress Controller annotations
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - eks.roodyadamsapp.com
+      secretName: eks-app-tls  # CertManager will create this secret automatically
+  rules:
+    - host: eks.roodyadamsapp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: your-service-name  # Replace with your actual service name
+                port:
+                  number: 80
+

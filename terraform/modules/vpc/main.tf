@@ -45,8 +45,8 @@ resource "aws_subnet" "public" {
   tags = merge(
     var.tags,
     {
-      Name                     = "${var.project_name}-${var.environment}-public-subnet-${count.index + 1}"
-      "kubernetes.io/role/elb" = "1"
+      Name                                                           = "${var.project_name}-${var.environment}-public-subnet-${count.index + 1}"
+      "kubernetes.io/role/elb"                                       = "1"
       "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "shared"
     }
   )
@@ -63,8 +63,8 @@ resource "aws_subnet" "private" {
   tags = merge(
     var.tags,
     {
-      Name                              = "${var.project_name}-${var.environment}-private-subnet-${count.index + 1}"
-      "kubernetes.io/role/internal-elb" = "1"
+      Name                                                           = "${var.project_name}-${var.environment}-private-subnet-${count.index + 1}"
+      "kubernetes.io/role/internal-elb"                              = "1"
       "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "shared"
     }
   )
@@ -74,7 +74,7 @@ resource "aws_subnet" "private" {
 resource "aws_eip" "nat" {
   count = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.availability_zones)) : 0
 
-  domain = "vpc"
+  domain     = "vpc"
   depends_on = [aws_internet_gateway.main]
 
   tags = merge(

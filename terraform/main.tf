@@ -16,14 +16,8 @@ terraform {
     }
   }
 
-  # Uncomment and configure when ready to use remote state
-  # backend "s3" {
-  #   bucket         = "your-terraform-state-bucket"
-  #   key            = "eks-cluster/terraform.tfstate"
-  #   region         = "eu-west-2"  # London
-  #   encrypt        = true
-  #   dynamodb_table = "terraform-state-lock"
-  # }
+  # Remote backend configuration is in backend.tf
+  # Backend is configured via -backend-config flags in CI/CD
 }
 
 provider "aws" {

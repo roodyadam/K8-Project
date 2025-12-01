@@ -65,7 +65,7 @@ jobs:
       - name: Terraform Plan
         timeout-minutes: 10
         working-directory: ./terraform
-        run: terraform plan -no-color -out=tfplan
+        run: terraform plan -no-color -var="aws_region=${{ env.AWS_REGION }}" -out=tfplan
 
       - name: Terraform Apply
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'

@@ -88,6 +88,18 @@ variable "enable_cluster_autoscaler" {
   default     = true
 }
 
+variable "endpoint_public_access" {
+  description = "Whether the Amazon EKS public API server endpoint is enabled"
+  type        = bool
+  default     = true
+}
+
+variable "public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
 variable "tags" {
   description = "Additional tags to apply to all resources"
   type        = map(string)

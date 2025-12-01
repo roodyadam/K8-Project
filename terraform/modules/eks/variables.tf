@@ -13,6 +13,11 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "aws_account_id" {
+  description = "AWS account ID"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "ID of the VPC"
   type        = string
@@ -88,6 +93,18 @@ variable "ssh_key_name" {
   description = "SSH key name for node access (optional)"
   type        = string
   default     = ""
+}
+
+variable "endpoint_public_access" {
+  description = "Whether the Amazon EKS public API server endpoint is enabled"
+  type        = bool
+  default     = true
+}
+
+variable "public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
 
 variable "tags" {

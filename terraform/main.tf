@@ -103,9 +103,9 @@ data "aws_caller_identity" "current" {}
 module "vpc" {
   source = "./modules/vpc"
 
-  project_name     = var.project_name
-  environment      = var.environment
-  vpc_cidr         = var.vpc_cidr
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_cidr           = var.vpc_cidr
   availability_zones = var.availability_zones != null ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 3)
 
   enable_nat_gateway = var.enable_nat_gateway
@@ -117,11 +117,11 @@ module "vpc" {
 module "iam" {
   source = "./modules/iam"
 
-  project_name = var.project_name
-  environment  = var.environment
-  cluster_name = var.cluster_name
-  aws_region   = var.aws_region
-  aws_account_id = data.aws_caller_identity.current.account_id
+  project_name             = var.project_name
+  environment              = var.environment
+  cluster_name             = var.cluster_name
+  aws_region               = var.aws_region
+  aws_account_id           = data.aws_caller_identity.current.account_id
   github_actions_role_name = "github-actions-terraform-role"
 
   tags = var.tags
@@ -163,6 +163,10 @@ module "eks" {
   disk_size           = var.disk_size
 
   enable_cluster_autoscaler = var.enable_cluster_autoscaler
+
+  endpoint_public_access = var.endpoint_public_access
+  public_access_cidrs    = var.public_access_cidrs
+  aws_account_id         = data.aws_caller_identity.current.account_id
 
   tags = var.tags
 }

@@ -17,8 +17,8 @@ resource "aws_eks_cluster" "main" {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
     security_group_ids      = [var.cluster_security_group_id]
     endpoint_private_access = true
-    endpoint_public_access  = true
-    public_access_cidrs     = ["0.0.0.0/0"] # Restrict this in production
+    endpoint_public_access  = var.endpoint_public_access
+    public_access_cidrs     = var.public_access_cidrs
   }
 
   # Enable control plane logging
@@ -49,6 +49,36 @@ resource "aws_kms_key" "eks" {
   description             = "KMS key for EKS cluster encryption"
   deletion_window_in_days = 7
   enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${var.aws_account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow EKS to use the key"
+        Effect = "Allow"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 
   tags = merge(
     var.tags,

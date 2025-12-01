@@ -49,6 +49,7 @@ jobs:
         with:
           directory: terraform/
           framework: terraform
+          config_file: .checkov.yml
           soft_fail: false
 
   build-and-scan:
@@ -57,6 +58,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      security-events: write
+      security-events: read
 
     steps:
       - name: Checkout
@@ -99,6 +102,7 @@ jobs:
           echo "image=${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
       - name: Trivy Scan
+        id: trivy-scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ steps.build-image.outputs.image }}
@@ -108,8 +112,8 @@ jobs:
           exit-code: '1'
 
       - name: Upload Trivy Results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && steps.trivy-scan.outcome == 'success' && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
 

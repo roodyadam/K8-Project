@@ -81,15 +81,8 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
           echo "repository_uri=${ECR_URI}" >> $GITHUB_OUTPUT
-
-      - name: Create ECR Repository
-        run: |
           aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }} || \
-          aws ecr create-repository \
-            --repository-name ${{ env.ECR_REPOSITORY }} \
-            --region ${{ env.AWS_REGION }} \
-            --image-scanning-configuration scanOnPush=true \
-            --encryption-configuration encryptionType=AES256
+            (echo "::error::ECR repository '${{ env.ECR_REPOSITORY }}' does not exist. Please run bootstrap Terraform first." && exit 1)
 
       - name: Build Image
         id: build-image

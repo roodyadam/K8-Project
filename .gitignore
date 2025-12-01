@@ -26,11 +26,22 @@ build/
 *.log
 
 # Terraform
-.terraform/
-terraform.tfstate
+**/.terraform/*
+*.tfstate
+*.tfstate.*
 terraform.tfstate.backup
-*.tfvars.backup
 errored.tfstate
+*.tfvars
+*.tfvars.json
+*.tfvars.backup
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
 
 # Kubernetes
 *.kubeconfig

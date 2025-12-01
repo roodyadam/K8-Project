@@ -126,6 +126,6 @@ defaultBackend:
   replicaCount: 1
   image:
     registry: registry.k8s.io
-    image: ingress-nginx/defaultbackend-amd64
+    image: ingress-nginx/defaultbackend
     tag: "1.5"
 

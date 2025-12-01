@@ -30,6 +30,7 @@ build/
 terraform.tfstate
 terraform.tfstate.backup
 *.tfvars.backup
+errored.tfstate
 
 # Kubernetes
 *.kubeconfig

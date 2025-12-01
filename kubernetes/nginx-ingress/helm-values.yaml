@@ -20,8 +20,6 @@ controller:
       service.beta.kubernetes.io/aws-load-balancer-type: "classic"
       service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
       service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
-      # Explicitly specify subnets (will be updated with actual subnet IDs)
-      service.beta.kubernetes.io/aws-load-balancer-subnets: "subnet-0681c09d2da1d7392,subnet-0b6f71d9009ea97a3,subnet-01d33b765f69e0d05"
     externalTrafficPolicy: Local
     # Use NodePort if you prefer (uncomment below and comment LoadBalancer)
     # type: NodePort

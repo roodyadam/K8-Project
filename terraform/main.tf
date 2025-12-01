@@ -171,6 +171,14 @@ module "eks" {
   tags = var.tags
 }
 
+module "nginx_ingress" {
+  source = "./modules/nginx-ingress"
+
+  cluster_endpoint = module.eks.cluster_endpoint
+
+  depends_on = [module.eks]
+}
+
 module "argocd" {
   source = "./modules/argocd"
 
@@ -178,7 +186,7 @@ module "argocd" {
   cluster_name     = var.cluster_name
   aws_region       = var.aws_region
 
-  depends_on = [module.eks]
+  depends_on = [module.eks, module.nginx_ingress]
 }
 
 module "prometheus" {
@@ -186,7 +194,7 @@ module "prometheus" {
 
   cluster_endpoint = module.eks.cluster_endpoint
 
-  depends_on = [module.eks]
+  depends_on = [module.eks, module.nginx_ingress]
 }
 
 module "grafana" {

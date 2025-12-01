@@ -127,3 +127,39 @@ resource "aws_iam_role_policy_attachment" "node_group_cluster_autoscaler" {
   role       = aws_iam_role.node_group.name
 }
 
+resource "aws_iam_role_policy" "github_actions_ecr" {
+  count = var.github_actions_role_name != null ? 1 : 0
+
+  name = "ECRAccessPolicy"
+  role = var.github_actions_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:CreateRepository",
+          "ecr:DescribeRepositories",
+          "ecr:DescribeImages"
+        ]
+        Resource = "arn:aws:ecr:${var.aws_region}:${var.aws_account_id}:repository/*"
+      }
+    ]
+  })
+}
+

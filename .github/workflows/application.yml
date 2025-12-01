@@ -14,13 +14,19 @@ on:
     paths:
       - 'aim/**'
       - 'kubernetes/apps/**'
+  workflow_run:
+    workflows: ["Terraform Deploy"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 env:
   AWS_REGION: eu-west-2
   ECR_REPOSITORY: eks-project-aim
   EKS_CLUSTER_NAME: eks-cluster
-  IMAGE_TAG: ${{ github.sha }}
+  IMAGE_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
   APP_NAME: aim
   APP_NAMESPACE: default
 
@@ -35,6 +41,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
@@ -53,6 +61,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -104,7 +114,9 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
       - name: Push Image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: |
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
         run: |
           docker push ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}
           docker push ${{ steps.ecr-repo.outputs.repository_uri }}:latest
@@ -113,7 +125,9 @@ jobs:
     name: Deploy
     needs: [security-scan, build-and-scan]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     permissions:
       contents: read
       id-token: write
@@ -121,6 +135,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Check Terraform Workflow Status
+        if: github.event_name == 'workflow_run'
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "::error::Terraform workflow did not succeed. Skipping deployment."
+            exit 1
+          fi
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -128,17 +152,25 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify Cluster
+      - name: Verify Cluster Exists
         run: |
-          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+          if ! aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            echo "::error::EKS cluster '${{ env.EKS_CLUSTER_NAME }}' does not exist."
+            echo "::error::Please run the Terraform pipeline first to create infrastructure."
+            exit 1
+          fi
 
-      - name: Wait for Cluster
+      - name: Wait for Cluster Active
         run: |
           for i in {1..30}; do
-            STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text)
-            [ "$STATUS" = "ACTIVE" ] && break
+            STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text 2>/dev/null || echo "NOT_FOUND")
+            if [ "$STATUS" = "ACTIVE" ]; then
+              exit 0
+            fi
             sleep 10
           done
+          echo "::error::Cluster did not become ACTIVE within timeout"
+          exit 1
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3

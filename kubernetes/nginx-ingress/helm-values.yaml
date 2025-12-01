@@ -117,8 +117,8 @@ controller:
   extraArgs:
     # Enable SSL passthrough
     enable-ssl-passthrough: ""
-    # Default SSL certificate (will be managed by CertManager)
-    default-ssl-certificate: "ingress-nginx/cert-manager-tls"
+    # Default SSL certificate (will be added after CertManager is deployed)
+    # default-ssl-certificate: "ingress-nginx/cert-manager-tls"
 
 # Default backend (optional)
 defaultBackend:

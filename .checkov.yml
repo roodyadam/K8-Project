@@ -4,17 +4,10 @@ framework:
 
 skip-check:
   - CKV2_AWS_12
-    comment: "Default security group is not used - custom security groups are created and attached"
   - CKV2_AWS_5
-    comment: "Security groups are attached to EKS cluster and node groups - Checkov cannot detect dynamic attachments"
   - CKV_AWS_382
-    comment: "EKS nodes require unrestricted egress for pulling container images and updates from internet"
   - CKV_AWS_290
-    comment: "Cluster autoscaler requires write access to autoscaling groups - wildcard resource is necessary for autoscaler functionality"
   - CKV_AWS_355
-    comment: "Cluster autoscaler requires wildcard resource access to manage autoscaling groups across the account"
   - CKV_AWS_38
-    comment: "EKS public endpoint CIDR is configurable via variable - can be restricted per environment"
   - CKV_AWS_39
-    comment: "EKS public endpoint access is configurable via variable - can be disabled for production environments"
 

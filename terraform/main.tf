@@ -46,9 +46,9 @@ data "aws_availability_zones" "available" {
 module "vpc" {
   source = "./modules/vpc"
 
-  project_name       = var.project_name
-  environment        = var.environment
-  vpc_cidr           = var.vpc_cidr
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_cidr     = var.vpc_cidr
   # Use explicit zones if provided, otherwise use first 3 available zones (EKS-supported)
   availability_zones = var.availability_zones != null ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 3)
 

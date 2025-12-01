@@ -118,9 +118,7 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
       - name: Push Image
-        if: |
-          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-          (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
         run: |
           docker push ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}
           docker push ${{ steps.ecr-repo.outputs.repository_uri }}:latest
@@ -129,9 +127,7 @@ jobs:
     name: Deploy
     needs: [security-scan, build-and-scan]
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     permissions:
       contents: read
       id-token: write
@@ -145,10 +141,7 @@ jobs:
       - name: Check Terraform Workflow Status
         if: github.event_name == 'workflow_run'
         run: |
-          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-            echo "::error::Terraform workflow did not succeed. Skipping deployment."
-            exit 1
-          fi
+          [ "${{ github.event.workflow_run.conclusion }}" != "success" ] && echo "::error::Terraform workflow did not succeed. Skipping deployment." && exit 1
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -158,23 +151,18 @@ jobs:
 
       - name: Verify Cluster Exists
         run: |
-          if ! aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} 2>/dev/null; then
-            echo "::error::EKS cluster '${{ env.EKS_CLUSTER_NAME }}' does not exist."
-            echo "::error::Please run the Terraform pipeline first to create infrastructure."
-            exit 1
-          fi
+          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} 2>/dev/null || \
+            (echo "::error::EKS cluster '${{ env.EKS_CLUSTER_NAME }}' does not exist." && \
+             echo "::error::Please run the Terraform pipeline first to create infrastructure." && exit 1)
 
       - name: Wait for Cluster Active
         run: |
           for i in {1..30}; do
             STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text 2>/dev/null || echo "NOT_FOUND")
-            if [ "$STATUS" = "ACTIVE" ]; then
-              exit 0
-            fi
+            [ "$STATUS" = "ACTIVE" ] && exit 0
             sleep 10
           done
-          echo "::error::Cluster did not become ACTIVE within timeout"
-          exit 1
+          echo "::error::Cluster did not become ACTIVE within timeout" && exit 1
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3

@@ -22,6 +22,9 @@ jobs:
   terraform:
     name: Terraform Plan/Apply
     runs-on: ubuntu-latest
+    concurrency:
+      group: terraform-deploy
+      cancel-in-progress: false
     permissions:
       contents: read
       id-token: write
@@ -60,11 +63,13 @@ jobs:
         run: terraform fmt -check -recursive
 
       - name: Terraform Plan
+        timeout-minutes: 10
         working-directory: ./terraform
         run: terraform plan -no-color -out=tfplan
 
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        timeout-minutes: 30
         working-directory: ./terraform
         run: terraform apply -auto-approve -no-color tfplan
 

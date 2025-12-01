@@ -16,7 +16,7 @@ resource "helm_release" "nginx_ingress" {
 
   create_namespace = true
   wait             = true
-  timeout          = 900
+  timeout          = 1200
 
   values = [
     file("${path.root}/../kubernetes/nginx-ingress/helm-values.yaml")

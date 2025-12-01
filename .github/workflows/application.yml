@@ -1,0 +1,175 @@
+name: Application Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'aim/**'
+      - 'kubernetes/apps/**'
+      - '.github/workflows/application.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'aim/**'
+      - 'kubernetes/apps/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: eu-west-2
+  ECR_REPOSITORY: eks-project-aim
+  EKS_CLUSTER_NAME: eks-cluster
+  IMAGE_TAG: ${{ github.sha }}
+  APP_NAME: aim
+  APP_NAMESPACE: default
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/
+          framework: terraform
+          soft_fail: false
+
+  build-and-scan:
+    name: Build and Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get ECR URI
+        id: ecr-repo
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+          echo "repository_uri=${ECR_URI}" >> $GITHUB_OUTPUT
+
+      - name: Create ECR Repository
+        run: |
+          aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository \
+            --repository-name ${{ env.ECR_REPOSITORY }} \
+            --region ${{ env.AWS_REGION }} \
+            --image-scanning-configuration scanOnPush=true \
+            --encryption-configuration encryptionType=AES256
+
+      - name: Build Image
+        id: build-image
+        run: |
+          docker build -f aim/docker/Dockerfile \
+            -t ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }} \
+            -t ${{ steps.ecr-repo.outputs.repository_uri }}:latest \
+            ./aim
+          echo "image=${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Trivy Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.build-image.outputs.image }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Push Image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}
+          docker push ${{ steps.ecr-repo.outputs.repository_uri }}:latest
+
+  deploy:
+    name: Deploy
+    needs: [security-scan, build-and-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify Cluster
+        run: |
+          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Wait for Cluster
+        run: |
+          for i in {1..30}; do
+            STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text)
+            [ "$STATUS" = "ACTIVE" ] && break
+            sleep 10
+          done
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Get ECR URI
+        id: ecr-repo
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+          echo "repository_uri=${ECR_URI}" >> $GITHUB_OUTPUT
+          echo "image_uri=${ECR_URI}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ env.APP_NAME }} ./kubernetes/apps \
+            --namespace ${{ env.APP_NAMESPACE }} \
+            --create-namespace \
+            --set image.repository=${{ steps.ecr-repo.outputs.repository_uri }} \
+            --set image.tag=${{ env.IMAGE_TAG }} \
+            --wait \
+            --timeout 10m
+
+      - name: Verify
+        run: |
+          kubectl get pods -n ${{ env.APP_NAMESPACE }} -l app.kubernetes.io/instance=${{ env.APP_NAME }}
+          kubectl get svc -n ${{ env.APP_NAMESPACE }} -l app.kubernetes.io/instance=${{ env.APP_NAME }}

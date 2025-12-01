@@ -1,0 +1,71 @@
+{
+  "title": "Kubernetes Cluster Overview",
+  "tags": ["kubernetes", "cluster"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Cluster CPU Usage",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\"}[5m])) by (namespace)",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {"format": "short", "label": "CPU Usage"},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Cluster Memory Usage",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(container_memory_working_set_bytes{container!=\"POD\",container!=\"\"}) by (namespace)",
+          "legendFormat": "{{namespace}}",
+          "refId": "A"
+        }
+      ],
+      "yaxes": [
+        {"format": "bytes", "label": "Memory"},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 3,
+      "title": "High CPU Usage (Top 10)",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\"}[5m])) by (pod, namespace))",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "High Memory Usage (Top 10)",
+      "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "topk(10, sum(container_memory_working_set_bytes{container!=\"POD\",container!=\"\"}) by (pod, namespace))",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "version": 1,
+  "editable": true
+}

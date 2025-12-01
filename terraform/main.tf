@@ -10,14 +10,19 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.23"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.11"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14"
+    }
     tls = {
       source  = "hashicorp/tls"
       version = "~> 4.0"
     }
   }
-
-  # Remote backend configuration is in backend.tf
-  # Backend is configured via -backend-config flags in CI/CD
 }
 
 provider "aws" {
@@ -32,24 +37,73 @@ provider "aws" {
   }
 }
 
-# Data source for availability zones
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks",
+      "get-token",
+      "--cluster-name",
+      var.cluster_name,
+      "--region",
+      var.aws_region
+    ]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args = [
+        "eks",
+        "get-token",
+        "--cluster-name",
+        var.cluster_name,
+        "--region",
+        var.aws_region
+      ]
+    }
+  }
+}
+
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args = [
+      "eks",
+      "get-token",
+      "--cluster-name",
+      var.cluster_name,
+      "--region",
+      var.aws_region
+    ]
+  }
+}
+
 data "aws_availability_zones" "available" {
   state = "available"
-  # Filter to only EKS-supported zones (first 3 zones are typically supported)
   filter {
     name   = "zone-type"
     values = ["availability-zone"]
   }
 }
 
-# VPC Module
 module "vpc" {
   source = "./modules/vpc"
 
-  project_name = var.project_name
-  environment  = var.environment
-  vpc_cidr     = var.vpc_cidr
-  # Use explicit zones if provided, otherwise use first 3 available zones (EKS-supported)
+  project_name     = var.project_name
+  environment      = var.environment
+  vpc_cidr         = var.vpc_cidr
   availability_zones = var.availability_zones != null ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 3)
 
   enable_nat_gateway = var.enable_nat_gateway
@@ -58,7 +112,6 @@ module "vpc" {
   tags = var.tags
 }
 
-# IAM Module
 module "iam" {
   source = "./modules/iam"
 
@@ -69,7 +122,6 @@ module "iam" {
   tags = var.tags
 }
 
-# Security Groups Module
 module "security_groups" {
   source = "./modules/security-groups"
 
@@ -81,7 +133,6 @@ module "security_groups" {
   tags = var.tags
 }
 
-# EKS Cluster Module
 module "eks" {
   source = "./modules/eks"
 
@@ -111,3 +162,28 @@ module "eks" {
   tags = var.tags
 }
 
+module "argocd" {
+  source = "./modules/argocd"
+
+  cluster_endpoint = module.eks.cluster_endpoint
+  cluster_name     = var.cluster_name
+  aws_region       = var.aws_region
+
+  depends_on = [module.eks]
+}
+
+module "prometheus" {
+  source = "./modules/prometheus"
+
+  cluster_endpoint = module.eks.cluster_endpoint
+
+  depends_on = [module.eks]
+}
+
+module "grafana" {
+  source = "./modules/grafana"
+
+  prometheus_service = module.prometheus.prometheus_service
+
+  depends_on = [module.prometheus]
+}

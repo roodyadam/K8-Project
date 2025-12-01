@@ -1,0 +1,7 @@
+apiVersion: v2
+name: aim
+description: Aim ML Experiment Tracking Application
+type: application
+version: 1.0.0
+appVersion: "latest"
+

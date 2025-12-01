@@ -171,6 +171,38 @@ module "eks" {
   tags = var.tags
 }
 
+resource "kubectl_manifest" "aws_auth" {
+  depends_on = [module.eks]
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "ConfigMap"
+    metadata = {
+      name      = "aws-auth"
+      namespace = "kube-system"
+    }
+    data = {
+      mapRoles = yamlencode([
+        {
+          rolearn  = module.iam.node_group_role_arn
+          username = "system:node:{{EC2PrivateDNSName}}"
+          groups = [
+            "system:bootstrappers",
+            "system:nodes"
+          ]
+        }
+      ])
+      mapUsers = yamlencode([
+        {
+          userarn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          username = "admin"
+          groups   = ["system:masters"]
+        }
+      ])
+    }
+  })
+}
+
 module "nginx_ingress" {
   source = "./modules/nginx-ingress"
 

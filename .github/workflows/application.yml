@@ -169,6 +169,7 @@ jobs:
             --create-namespace \
             --set image.repository=${{ steps.ecr-repo.outputs.repository_uri }} \
             --set image.tag=${{ env.IMAGE_TAG }} \
+            --adopt \
             --wait \
             --timeout 10m
 

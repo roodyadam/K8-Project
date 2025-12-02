@@ -120,9 +120,9 @@ module "iam" {
 
   project_name   = var.project_name
   environment    = var.environment
-  cluster_name    = var.cluster_name
-  aws_region      = var.aws_region
-  aws_account_id  = data.aws_caller_identity.current.account_id
+  cluster_name   = var.cluster_name
+  aws_region     = var.aws_region
+  aws_account_id = data.aws_caller_identity.current.account_id
 
   tags = var.tags
 }

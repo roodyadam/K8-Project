@@ -17,7 +17,7 @@ resource "helm_release" "nginx_ingress" {
   create_namespace = true
   wait             = true
   wait_for_jobs    = false
-  timeout          = 600  # 10 minutes - reduced since we're not waiting for LB
+  timeout          = 600 # 10 minutes - reduced since we're not waiting for LB
 
   values = [
     file("${path.root}/../kubernetes/nginx-ingress/helm-values.yaml")
@@ -32,4 +32,3 @@ resource "helm_release" "nginx_ingress" {
 
   depends_on = [var.cluster_endpoint]
 }
-

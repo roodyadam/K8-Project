@@ -73,23 +73,3 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -auto-approve -no-color tfplan
 
-      - name: Install kubectl (for diagnostics)
-        if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
-        uses: azure/setup-kubectl@v3
-
-      - name: Install Helm (for diagnostics)
-        if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
-
-      - name: Diagnose NGINX Ingress Pod Failures
-        if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
-        continue-on-error: true
-        timeout-minutes: 5
-        run: |
-          aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
-          kubectl get pods -n ingress-nginx -o wide || true
-          kubectl get events -n ingress-nginx --sort-by='.lastTimestamp' | tail -30 || true
-          helm status ingress-nginx -n ingress-nginx 2>&1 || true
-

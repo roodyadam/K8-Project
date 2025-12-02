@@ -160,6 +160,18 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Cleanup Orphaned PVC
+        continue-on-error: true
+        run: |
+          PVC_NAME="${{ env.APP_NAME }}-pvc"
+          if kubectl get pvc "$PVC_NAME" -n ${{ env.APP_NAMESPACE }} 2>/dev/null; then
+            HELM_OWNED=$(kubectl get pvc "$PVC_NAME" -n ${{ env.APP_NAMESPACE }} -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-name}' 2>/dev/null || echo "")
+            if [ -z "$HELM_OWNED" ]; then
+              echo "Deleting orphaned PVC $PVC_NAME (not managed by Helm)..."
+              kubectl delete pvc "$PVC_NAME" -n ${{ env.APP_NAMESPACE }} --ignore-not-found=true
+            fi
+          fi
+
       - name: Deploy with Helm
         run: |
           helm upgrade --install ${{ env.APP_NAME }} ./kubernetes/apps \
@@ -167,7 +179,6 @@ jobs:
             --create-namespace \
             --set image.repository=${{ steps.ecr-repo.outputs.repository_uri }} \
             --set image.tag=${{ env.IMAGE_TAG }} \
-            --adopt \
             --wait \
             --timeout 10m
 

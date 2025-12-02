@@ -75,15 +75,22 @@ jobs:
       - name: Cleanup NGINX Ingress Helm Release
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
         timeout-minutes: 5
+        continue-on-error: true
         run: |
           aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
-          if helm list -n ingress-nginx 2>/dev/null | grep -q ingress-nginx; then
-            echo "Removing existing NGINX Ingress Helm release..."
-            helm uninstall ingress-nginx -n ingress-nginx || true
-            sleep 5
-            kubectl delete namespace ingress-nginx --ignore-not-found=true || true
-            echo "✅ Cleanup complete"
-          fi
+          echo "Checking for NGINX Ingress in all namespaces..."
+          helm list -A | grep ingress-nginx || echo "Not found in helm list"
+          echo "Attempting to uninstall ingress-nginx..."
+          helm uninstall ingress-nginx -n ingress-nginx 2>&1 || echo "Uninstall attempted"
+          echo "Deleting Helm secrets for ingress-nginx..."
+          kubectl delete secrets -n ingress-nginx -l owner=helm 2>&1 || true
+          kubectl delete secrets -A -l owner=helm,name=ingress-nginx 2>&1 || true
+          sleep 10
+          echo "Deleting ingress-nginx namespace..."
+          kubectl delete namespace ingress-nginx --ignore-not-found=true --wait=false 2>&1 || true
+          sleep 5
+          echo "Final verification..."
+          helm list -A | grep ingress-nginx && echo "⚠️ Still exists" || echo "✅ Cleanup complete"
 
       - name: Terraform Plan
         timeout-minutes: 10

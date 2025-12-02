@@ -62,11 +62,6 @@ jobs:
         working-directory: ./terraform
         run: terraform fmt -check -recursive
 
-      - name: Terraform Plan
-        timeout-minutes: 10
-        working-directory: ./terraform
-        run: terraform plan -no-color -var="aws_region=${{ env.AWS_REGION }}" -out=tfplan
-
       - name: Install kubectl
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
         uses: azure/setup-kubectl@v3
@@ -89,6 +84,11 @@ jobs:
             kubectl delete namespace ingress-nginx --ignore-not-found=true || true
             echo "✅ Cleanup complete"
           fi
+
+      - name: Terraform Plan
+        timeout-minutes: 10
+        working-directory: ./terraform
+        run: terraform plan -no-color -var="aws_region=${{ env.AWS_REGION }}" -out=tfplan
 
       - name: Terraform Apply
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'

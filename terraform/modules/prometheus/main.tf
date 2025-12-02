@@ -19,8 +19,10 @@ resource "helm_release" "prometheus" {
   version    = "55.5.0"
 
   create_namespace = true
-  wait             = true
-  timeout          = 600
+  wait             = false
+  atomic           = false
+  cleanup_on_fail  = false
+  timeout          = 300
 
   values = [
     file("${path.root}/../kubernetes/monitoring/prometheus/values.yaml")

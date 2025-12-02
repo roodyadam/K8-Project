@@ -62,27 +62,6 @@ jobs:
         working-directory: ./terraform
         run: terraform fmt -check -recursive
 
-      - name: Install kubectl
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        uses: azure/setup-kubectl@v3
-
-      - name: Install Helm
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
-
-      - name: Cleanup NGINX Ingress Helm Release
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        timeout-minutes: 5
-        continue-on-error: true
-        run: |
-          aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
-          helm uninstall ingress-nginx -n ingress-nginx 2>&1 || true
-          kubectl delete secrets -A -l owner=helm,name=ingress-nginx 2>&1 || true
-          kubectl delete namespace ingress-nginx --ignore-not-found=true --wait=false 2>&1 || true
-          sleep 5
-
       - name: Terraform Plan
         timeout-minutes: 10
         working-directory: ./terraform
@@ -93,6 +72,16 @@ jobs:
         timeout-minutes: 30
         working-directory: ./terraform
         run: terraform apply -auto-approve -no-color tfplan
+
+      - name: Install kubectl (for diagnostics)
+        if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
+        uses: azure/setup-kubectl@v3
+
+      - name: Install Helm (for diagnostics)
+        if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
 
       - name: Diagnose NGINX Ingress Pod Failures
         if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')

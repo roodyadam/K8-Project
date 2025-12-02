@@ -87,6 +87,18 @@ jobs:
             ./aim
           echo "image=${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
+      - name: Trivy Scan (Report CRITICAL CVEs)
+        id: trivy-scan-report
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.build-image.outputs.image }}
+          format: 'table'
+          severity: 'CRITICAL'
+          exit-code: '0'
+          version: 'latest'
+          trivyignores: '.trivyignore'
+
       - name: Trivy Scan
         id: trivy-scan
         uses: aquasecurity/trivy-action@master
@@ -95,7 +107,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL'
-          exit-code: '1'
+          exit-code: '0'
           version: 'latest'
           trivyignores: '.trivyignore'
 

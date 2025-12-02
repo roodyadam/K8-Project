@@ -160,17 +160,11 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Cleanup Orphaned PVC
+      - name: Cleanup Orphaned PVC (One-time)
         continue-on-error: true
         run: |
-          PVC_NAME="${{ env.APP_NAME }}-pvc"
-          if kubectl get pvc "$PVC_NAME" -n ${{ env.APP_NAMESPACE }} 2>/dev/null; then
-            HELM_OWNED=$(kubectl get pvc "$PVC_NAME" -n ${{ env.APP_NAMESPACE }} -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-name}' 2>/dev/null || echo "")
-            if [ -z "$HELM_OWNED" ]; then
-              echo "Deleting orphaned PVC $PVC_NAME (not managed by Helm)..."
-              kubectl delete pvc "$PVC_NAME" -n ${{ env.APP_NAMESPACE }} --ignore-not-found=true
-            fi
-          fi
+          kubectl delete pvc aim-pvc -n default --ignore-not-found=true
+          sleep 2
 
       - name: Deploy with Helm
         run: |

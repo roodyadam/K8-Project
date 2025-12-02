@@ -67,35 +67,6 @@ jobs:
         working-directory: ./terraform
         run: terraform plan -no-color -var="aws_region=${{ env.AWS_REGION }}" -out=tfplan
 
-      - name: Install kubectl
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        uses: azure/setup-kubectl@v3
-
-      - name: Install Helm
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
-
-      - name: Configure kubectl
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        run: aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
-
-      - name: Cleanup Existing NGINX Ingress Helm Release
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-        timeout-minutes: 5
-        run: |
-          if helm list -n ingress-nginx 2>/dev/null | grep -q ingress-nginx; then
-            echo "Found existing NGINX Ingress Helm release. Deleting..."
-            helm uninstall ingress-nginx -n ingress-nginx || true
-            echo "Waiting for cleanup..."
-            sleep 10
-            kubectl delete namespace ingress-nginx --ignore-not-found=true || true
-            echo "✅ NGINX Ingress Helm release cleaned up"
-          else
-            echo "No existing NGINX Ingress Helm release found. Proceeding..."
-          fi
-
       - name: Terraform Apply
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
         timeout-minutes: 30

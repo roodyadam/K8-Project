@@ -110,17 +110,19 @@ jobs:
           docker push ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}
 
   deploy:
-    name: Deploy
+    name: GitOps Deploy (ArgoCD)
     needs: [security-scan, build-and-scan]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -133,21 +135,6 @@ jobs:
           aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || \
             (echo "::error::EKS cluster does not exist. Run Terraform pipeline first." && exit 1)
 
-      - name: Wait for Cluster Active
-        run: |
-          for i in {1..30}; do
-            STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text || echo "NOT_FOUND")
-            [ "$STATUS" = "ACTIVE" ] && exit 0
-            sleep 10
-          done
-          echo "::error::Cluster did not become ACTIVE within timeout" && exit 1
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-
-      - name: Configure kubectl
-        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-
       - name: Get ECR URI
         id: ecr-repo
         run: |
@@ -155,22 +142,46 @@ jobs:
           ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
           echo "repository_uri=${ECR_URI}" >> $GITHUB_OUTPUT
 
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
-
-      - name: Deploy with Helm
+      - name: Update Image Tag in Helm Values
         run: |
-          helm upgrade --install ${{ env.APP_NAME }} ./kubernetes/apps \
-            --namespace ${{ env.APP_NAMESPACE }} \
-            --create-namespace \
-            --set image.repository=${{ steps.ecr-repo.outputs.repository_uri }} \
-            --set image.tag=${{ env.IMAGE_TAG }} \
-            --wait \
-            --timeout 10m
+          # Update both repository and tag in values.yaml
+          sed -i "s|repository:.*|repository: \"${{ steps.ecr-repo.outputs.repository_uri }}\"|" kubernetes/apps/values.yaml
+          sed -i "s|tag:.*|tag: \"${{ env.IMAGE_TAG }}\"|" kubernetes/apps/values.yaml
+          echo "Updated values.yaml:"
+          echo "  repository: ${{ steps.ecr-repo.outputs.repository_uri }}"
+          echo "  tag: ${{ env.IMAGE_TAG }}"
 
-      - name: Verify
+      - name: Commit and Push Changes
         run: |
-          kubectl get pods -n ${{ env.APP_NAMESPACE }} -l app.kubernetes.io/instance=${{ env.APP_NAME }}
-          kubectl get svc -n ${{ env.APP_NAMESPACE }} -l app.kubernetes.io/instance=${{ env.APP_NAME }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add kubernetes/apps/values.yaml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update image to ${{ env.IMAGE_TAG }} [skip ci]"
+            git push
+            echo "✅ Pushed image tag update to Git. ArgoCD will automatically sync."
+          fi
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Verify ArgoCD Application Status
+        run: |
+          echo "🔍 Checking ArgoCD application status..."
+          sleep 10
+          if kubectl get application aim-application -n argocd &>/dev/null; then
+            echo "✅ ArgoCD application found"
+            echo ""
+            echo "Application Status:"
+            kubectl get application aim-application -n argocd -o jsonpath='{.status.sync.status}' || echo "Unknown"
+            echo ""
+            echo "📊 ArgoCD will automatically sync within 3 minutes"
+            echo "🌐 View status at: https://argocd.roodyadamsapp.com"
+          else
+            echo "⚠️  ArgoCD application not found. Ensure Terraform pipeline has completed."
+          fi

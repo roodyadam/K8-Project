@@ -21,7 +21,7 @@ controller:
       service.beta.kubernetes.io/aws-load-balancer-type: "classic"
       service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
       service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
-    externalTrafficPolicy: Local
+    externalTrafficPolicy: Cluster
     # Use NodePort if you prefer (uncomment below and comment LoadBalancer)
     # type: NodePort
 
@@ -63,8 +63,7 @@ controller:
 
   # Pod disruption budget
   podDisruptionBudget:
-    enabled: true
-    minAvailable: 1
+    enabled: false
 
   # Node selector and tolerations (optional)
   # nodeSelector:

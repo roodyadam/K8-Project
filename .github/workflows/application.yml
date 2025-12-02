@@ -160,12 +160,6 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Cleanup Orphaned PVC (One-time)
-        continue-on-error: true
-        run: |
-          kubectl delete pvc aim-pvc -n default --ignore-not-found=true
-          sleep 2
-
       - name: Deploy with Helm
         run: |
           helm upgrade --install ${{ env.APP_NAME }} ./kubernetes/apps \

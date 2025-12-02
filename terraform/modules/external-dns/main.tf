@@ -97,20 +97,14 @@ resource "aws_iam_policy" "external_dns" {
   )
 }
 
-# Attach policy to role
 resource "aws_iam_role_policy_attachment" "external_dns" {
   role       = aws_iam_role.external_dns.name
   policy_arn = aws_iam_policy.external_dns.arn
 }
 
-# Kubernetes Service Account for ExternalDNS
-resource "kubernetes_service_account" "external_dns" {
+resource "kubernetes_namespace" "external_dns" {
   metadata {
-    name      = "external-dns"
-    namespace = var.namespace
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.external_dns.arn
-    }
+    name = var.namespace
     labels = {
       app = "external-dns"
     }
@@ -119,7 +113,24 @@ resource "kubernetes_service_account" "external_dns" {
   depends_on = [var.cluster_endpoint]
 }
 
-# Deploy ExternalDNS via Helm
+resource "kubernetes_service_account" "external_dns" {
+  metadata {
+    name      = "external-dns"
+    namespace = kubernetes_namespace.external_dns.metadata[0].name
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.external_dns.arn
+    }
+    labels = {
+      app = "external-dns"
+    }
+  }
+
+  depends_on = [
+    kubernetes_namespace.external_dns,
+    var.cluster_endpoint
+  ]
+}
+
 resource "helm_release" "external_dns" {
   name       = "external-dns"
   repository = "https://kubernetes-sigs.github.io/external-dns/"
@@ -127,7 +138,7 @@ resource "helm_release" "external_dns" {
   namespace  = var.namespace
   version    = "1.14.0"
 
-  create_namespace = true
+  create_namespace = false
   wait             = true
   timeout          = 600
 
@@ -150,6 +161,7 @@ resource "helm_release" "external_dns" {
   ]
 
   depends_on = [
+    kubernetes_namespace.external_dns,
     kubernetes_service_account.external_dns,
     var.cluster_endpoint
   ]

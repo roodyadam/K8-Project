@@ -15,16 +15,15 @@ resource "helm_release" "nginx_ingress" {
   version    = "4.8.3"
 
   create_namespace = true
-  wait             = true
-  wait_for_jobs    = false
-  timeout          = 900
+  wait             = false
+  atomic           = false
+  cleanup_on_fail  = false
+  timeout          = 300
 
   values = [
     file("${path.root}/../kubernetes/nginx-ingress/helm-values.yaml")
   ]
 
-  # Don't wait for LoadBalancer to provision (it can take 10-15 minutes)
-  # This allows Helm to complete once pods are ready, LB will provision in background
   set {
     name  = "controller.service.waitForLoadBalancer"
     value = "false"

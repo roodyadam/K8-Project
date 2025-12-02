@@ -87,18 +87,6 @@ jobs:
             ./aim
           echo "image=${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
-      - name: Trivy Scan (Report CRITICAL CVEs)
-        id: trivy-scan-report
-        continue-on-error: true
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ steps.build-image.outputs.image }}
-          format: 'table'
-          severity: 'CRITICAL'
-          exit-code: '0'
-          version: 'latest'
-          trivyignores: '.trivyignore'
-
       - name: Trivy Scan
         id: trivy-scan
         uses: aquasecurity/trivy-action@master
@@ -113,7 +101,7 @@ jobs:
 
       - name: Upload Trivy Results
         uses: github/codeql-action/upload-sarif@v4
-        if: always() && steps.trivy-scan.outcome == 'success' && hashFiles('trivy-results.sarif') != ''
+        if: always() && steps.trivy-scan.outcome == 'success'
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -144,14 +132,13 @@ jobs:
 
       - name: Verify Cluster Exists
         run: |
-          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} 2>/dev/null || \
-            (echo "::error::EKS cluster '${{ env.EKS_CLUSTER_NAME }}' does not exist." && \
-             echo "::error::Please run the Terraform pipeline first to create infrastructure." && exit 1)
+          aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} || \
+            (echo "::error::EKS cluster does not exist. Run Terraform pipeline first." && exit 1)
 
       - name: Wait for Cluster Active
         run: |
           for i in {1..30}; do
-            STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text 2>/dev/null || echo "NOT_FOUND")
+            STATUS=$(aws eks describe-cluster --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }} --query 'cluster.status' --output text || echo "NOT_FOUND")
             [ "$STATUS" = "ACTIVE" ] && exit 0
             sleep 10
           done
@@ -169,7 +156,6 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
           echo "repository_uri=${ECR_URI}" >> $GITHUB_OUTPUT
-          echo "image_uri=${ECR_URI}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
       - name: Install Helm
         uses: azure/setup-helm@v3

@@ -78,19 +78,10 @@ jobs:
         continue-on-error: true
         run: |
           aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
-          echo "Checking for NGINX Ingress in all namespaces..."
-          helm list -A | grep ingress-nginx || echo "Not found in helm list"
-          echo "Attempting to uninstall ingress-nginx..."
-          helm uninstall ingress-nginx -n ingress-nginx 2>&1 || echo "Uninstall attempted"
-          echo "Deleting Helm secrets for ingress-nginx..."
-          kubectl delete secrets -n ingress-nginx -l owner=helm 2>&1 || true
+          helm uninstall ingress-nginx -n ingress-nginx 2>&1 || true
           kubectl delete secrets -A -l owner=helm,name=ingress-nginx 2>&1 || true
-          sleep 10
-          echo "Deleting ingress-nginx namespace..."
           kubectl delete namespace ingress-nginx --ignore-not-found=true --wait=false 2>&1 || true
           sleep 5
-          echo "Final verification..."
-          helm list -A | grep ingress-nginx && echo "⚠️ Still exists" || echo "✅ Cleanup complete"
 
       - name: Terraform Plan
         timeout-minutes: 10
@@ -104,29 +95,12 @@ jobs:
         run: terraform apply -auto-approve -no-color tfplan
 
       - name: Diagnose NGINX Ingress Pod Failures
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        if: failure() && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         timeout-minutes: 5
         run: |
           aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
-          echo "=== NGINX Ingress Pod Status ==="
-          kubectl get pods -n ingress-nginx -o wide || echo "Namespace or pods not found"
-          echo ""
-          echo "=== Pod Events ==="
-          kubectl get events -n ingress-nginx --sort-by='.lastTimestamp' | tail -20 || echo "No events found"
-          echo ""
-          echo "=== Pod Logs (if any pods exist) ==="
-          for pod in $(kubectl get pods -n ingress-nginx -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
-            echo "--- Logs for $pod ---"
-            kubectl logs -n ingress-nginx $pod --tail=50 2>&1 || echo "Cannot get logs for $pod"
-          done
-          echo ""
-          echo "=== Describe Pods ==="
-          kubectl describe pods -n ingress-nginx | tail -50 || echo "Cannot describe pods"
-          echo ""
-          echo "=== Node Resources ==="
-          kubectl top nodes 2>/dev/null || echo "Metrics not available"
-          echo ""
-          echo "=== Helm Release Status ==="
-          helm status ingress-nginx -n ingress-nginx 2>&1 || echo "Cannot get helm status"
+          kubectl get pods -n ingress-nginx -o wide || true
+          kubectl get events -n ingress-nginx --sort-by='.lastTimestamp' | tail -30 || true
+          helm status ingress-nginx -n ingress-nginx 2>&1 || true
 

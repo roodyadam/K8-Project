@@ -1,6 +1,3 @@
-# NGINX Ingress Controller Helm Chart Values
-# Install with: helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx -f helm-values.yaml
-
 controller:
   name: controller
   image:
@@ -9,30 +6,22 @@ controller:
     tag: "v1.9.4"
     digest: ""
 
-  # Replica count
-  # Reduced to 1 initially for faster deployment, can scale up later
   replicaCount: 1
 
-  # Service configuration
   service:
     type: LoadBalancer
     annotations:
-      # Use Classic Load Balancer (works without AWS Load Balancer Controller)
       service.beta.kubernetes.io/aws-load-balancer-type: "classic"
       service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
       service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
     externalTrafficPolicy: Cluster
-    # Use NodePort if you prefer (uncomment below and comment LoadBalancer)
-    # type: NodePort
 
-  # Ingress class configuration
   ingressClassResource:
     name: nginx
     enabled: true
     default: true
     controllerValue: "k8s.io/ingress-nginx"
 
-  # Metrics and monitoring
   metrics:
     enabled: true
     service:
@@ -40,8 +29,6 @@ controller:
         prometheus.io/scrape: "true"
         prometheus.io/port: "10254"
 
-  # Enable admission webhooks for validation
-  # Disabled to speed up deployment - can be enabled later if needed
   admissionWebhooks:
     enabled: false
     patch:
@@ -52,7 +39,6 @@ controller:
         tag: "v20231011-8b53cabe0"
         digest: ""
 
-  # Resource limits and requests
   resources:
     limits:
       cpu: 1000m
@@ -61,16 +47,9 @@ controller:
       cpu: 100m
       memory: 90Mi
 
-  # Pod disruption budget
   podDisruptionBudget:
     enabled: false
 
-  # Node selector and tolerations (optional)
-  # nodeSelector:
-  #   kubernetes.io/os: linux
-  # tolerations: []
-
-  # Affinity for high availability
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -88,40 +67,23 @@ controller:
                     - controller
             topologyKey: kubernetes.io/hostname
 
-  # ConfigMap for custom configuration
   config:
-    # Enable SSL passthrough
     enable-ssl-passthrough: "true"
-    # SSL protocols
     ssl-protocols: "TLSv1.2 TLSv1.3"
-    # Use proxy protocol
     use-proxy-protocol: "false"
-    # Compute full forward for
     compute-full-forwarded-for: "true"
-    # Use forwarded headers
     use-forwarded-headers: "true"
-    # Client body buffer size
     client-body-buffer-size: "1m"
-    # Proxy body size
     proxy-body-size: "10m"
-    # Enable real IP
     enable-real-ip: "true"
-    # Forwarded for header
     forwarded-for-header: "X-Forwarded-For"
-    # Enable access log
     enable-access-log: "true"
-    # Log format
     log-format-upstream: |
       $remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $request_length $request_time [$proxy_upstream_name] [$proxy_alternative_upstream_name] $upstream_addr $upstream_response_length $upstream_response_time $upstream_status $req_id
 
-  # Extra arguments
   extraArgs:
-    # Enable SSL passthrough
     enable-ssl-passthrough: ""
-    # Default SSL certificate (will be added after CertManager is deployed)
-    # default-ssl-certificate: "ingress-nginx/cert-manager-tls"
 
-# Default backend (optional)
 defaultBackend:
   enabled: true
   replicaCount: 1

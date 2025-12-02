@@ -110,6 +110,7 @@ module "vpc" {
 
   enable_nat_gateway = var.enable_nat_gateway
   single_nat_gateway = var.single_nat_gateway
+  aws_account_id     = data.aws_caller_identity.current.account_id
 
   tags = var.tags
 }

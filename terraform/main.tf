@@ -117,12 +117,11 @@ module "vpc" {
 module "iam" {
   source = "./modules/iam"
 
-  project_name             = var.project_name
-  environment              = var.environment
-  cluster_name             = var.cluster_name
-  aws_region               = var.aws_region
-  aws_account_id           = data.aws_caller_identity.current.account_id
-  github_actions_role_name = "github-actions-terraform-role"
+  project_name   = var.project_name
+  environment    = var.environment
+  cluster_name    = var.cluster_name
+  aws_region      = var.aws_region
+  aws_account_id  = data.aws_caller_identity.current.account_id
 
   tags = var.tags
 }

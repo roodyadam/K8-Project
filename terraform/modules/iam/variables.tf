@@ -19,12 +19,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "github_actions_role_name" {
-  description = "Name of the GitHub Actions IAM role (optional, for ECR access)"
-  type        = string
-  default     = null
-}
-
 variable "aws_region" {
   description = "AWS region"
   type        = string

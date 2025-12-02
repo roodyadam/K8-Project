@@ -1,0 +1,13 @@
+# Bootstrap Infrastructure Configuration
+# Copy this file to terraform.tfvars and customize with your values
+
+aws_region = "eu-west-2"
+project_name = "eks-project"
+ecr_repository_name = "eks-project-aim"
+
+# Required for GitHub Actions OIDC
+aws_account_id = "147923156682"  # Replace with your AWS account ID
+
+# Optional: GitHub Actions OIDC Configuration
+github_actions_role_name = "github-actions-terraform-role"
+github_repo = "roodyadam/K8-Project"  # Format: owner/repo

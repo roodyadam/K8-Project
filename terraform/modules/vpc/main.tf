@@ -72,12 +72,7 @@ resource "aws_kms_alias" "cloudwatch_logs" {
   name          = "alias/${var.project_name}-${var.environment}-cloudwatch-logs"
   target_key_id = aws_kms_key.cloudwatch_logs.key_id
 
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.project_name}-${var.environment}-cloudwatch-logs-kms-alias"
-    }
-  )
+  # Note: aws_kms_alias does not support tags
 }
 
 # CloudWatch Log Group for VPC Flow Logs

@@ -83,7 +83,6 @@ jobs:
         run: |
           docker build -f aim/docker/Dockerfile \
             -t ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }} \
-            -t ${{ steps.ecr-repo.outputs.repository_uri }}:latest \
             ./aim
           echo "image=${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
@@ -109,7 +108,6 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker push ${{ steps.ecr-repo.outputs.repository_uri }}:${{ env.IMAGE_TAG }}
-          docker push ${{ steps.ecr-repo.outputs.repository_uri }}:latest
 
   deploy:
     name: Deploy

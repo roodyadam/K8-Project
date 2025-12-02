@@ -49,7 +49,7 @@ variable "single_nat_gateway" {
 variable "kubernetes_version" {
   description = "Kubernetes version for EKS cluster"
   type        = string
-  default     = "1.34"
+  default     = "1.30"
 }
 
 variable "node_instance_types" {
@@ -104,5 +104,23 @@ variable "tags" {
   description = "Additional tags to apply to all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "acme_email" {
+  description = "Email address for Let's Encrypt ACME registration"
+  type        = string
+  default     = "admin@example.com"
+}
+
+variable "external_dns_domain_filters" {
+  description = "List of domains to filter DNS records for ExternalDNS"
+  type        = list(string)
+  default     = []
+}
+
+variable "external_dns_policy" {
+  description = "ExternalDNS policy (sync, upsert-only, create-only)"
+  type        = string
+  default     = "sync"
 }
 

@@ -236,3 +236,30 @@ module "grafana" {
 
   depends_on = [module.prometheus]
 }
+
+module "cert_manager" {
+  source = "./modules/cert-manager"
+
+  cluster_endpoint = module.eks.cluster_endpoint
+  acme_email       = var.acme_email
+
+  depends_on = [module.eks, module.nginx_ingress]
+}
+
+module "external_dns" {
+  source = "./modules/external-dns"
+
+  cluster_endpoint  = module.eks.cluster_endpoint
+  cluster_name      = var.cluster_name
+  aws_account_id    = data.aws_caller_identity.current.account_id
+  aws_region        = var.aws_region
+  project_name      = var.project_name
+  environment       = var.environment
+  domain_filters    = var.external_dns_domain_filters
+  policy            = var.external_dns_policy
+  oidc_provider_arn = module.eks.oidc_provider_arn
+
+  tags = var.tags
+
+  depends_on = [module.eks]
+}

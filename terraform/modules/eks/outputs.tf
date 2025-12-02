@@ -54,4 +54,14 @@ output "kms_key_id" {
   value       = aws_kms_key.eks.id
 }
 
+output "oidc_provider_arn" {
+  description = "ARN of the OIDC provider for IRSA"
+  value       = aws_iam_openid_connect_provider.eks.arn
+}
+
+output "oidc_issuer_url" {
+  description = "OIDC issuer URL"
+  value       = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
 

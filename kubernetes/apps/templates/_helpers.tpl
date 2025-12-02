@@ -33,3 +33,4 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+

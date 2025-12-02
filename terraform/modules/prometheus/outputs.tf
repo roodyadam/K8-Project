@@ -6,3 +6,4 @@ output "prometheus_namespace" {
   value = "monitoring"
 }
 
+

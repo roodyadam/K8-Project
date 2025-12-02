@@ -6,3 +6,4 @@ output "grafana_namespace" {
   value = "monitoring"
 }
 
+

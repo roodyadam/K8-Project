@@ -129,3 +129,4 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller-metrics
 curl http://<service-ip>:10254/metrics
 ```
 
+

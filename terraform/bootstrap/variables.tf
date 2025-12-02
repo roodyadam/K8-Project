@@ -16,3 +16,4 @@ variable "ecr_repository_name" {
   default     = "eks-project-aim"
 }
 
+

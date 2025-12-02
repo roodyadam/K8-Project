@@ -18,3 +18,4 @@ output "node_group_role_name" {
   value       = aws_iam_role.node_group.name
 }
 
+

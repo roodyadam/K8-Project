@@ -10,7 +10,8 @@ controller:
     digest: ""
 
   # Replica count
-  replicaCount: 2
+  # Reduced to 1 initially for faster deployment, can scale up later
+  replicaCount: 1
 
   # Service configuration
   service:
@@ -40,10 +41,11 @@ controller:
         prometheus.io/port: "10254"
 
   # Enable admission webhooks for validation
+  # Disabled to speed up deployment - can be enabled later if needed
   admissionWebhooks:
-    enabled: true
+    enabled: false
     patch:
-      enabled: true
+      enabled: false
       image:
         registry: registry.k8s.io
         image: ingress-nginx/kube-webhook-certgen

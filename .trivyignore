@@ -1,0 +1,15 @@
+# Trivy Ignore File
+# Format: CVE-ID or vulnerability ID
+# Add specific CVE IDs here for vulnerabilities that are:
+# - False positives
+# - Acceptable risks in your environment
+# - Already mitigated by other controls
+# - In base images that will be updated separately
+
+# Example format:
+# CVE-2024-XXXXX
+# CVE-2024-YYYYY
+
+# Note: Only add CVEs here after proper security review.
+# Regularly review and remove entries when vulnerabilities are patched.
+

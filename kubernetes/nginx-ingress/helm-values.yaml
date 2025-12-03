@@ -85,10 +85,5 @@ controller:
     enable-ssl-passthrough: ""
 
 defaultBackend:
-  enabled: true
-  replicaCount: 1
-  image:
-    registry: registry.k8s.io
-    image: ingress-nginx/defaultbackend
-    tag: "1.5"
+  enabled: false
 

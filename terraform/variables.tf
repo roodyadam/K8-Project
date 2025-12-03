@@ -107,9 +107,13 @@ variable "tags" {
 }
 
 variable "acme_email" {
-  description = "Email address for Let's Encrypt ACME registration"
+  description = "Email address for Let's Encrypt ACME registration (must be a valid email domain)"
   type        = string
-  default     = "admin@example.com"
+
+  validation {
+    condition     = can(regex("^[^@]+@[^@]+\\.[^@]+$", var.acme_email)) && !can(regex("@example\\.com$", var.acme_email))
+    error_message = "acme_email must be a valid email address and cannot use example.com domain."
+  }
 }
 
 variable "external_dns_domain_filters" {

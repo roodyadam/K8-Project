@@ -105,6 +105,7 @@ module "vpc" {
 
   project_name       = var.project_name
   environment        = var.environment
+  cluster_name       = var.cluster_name
   vpc_cidr           = var.vpc_cidr
   availability_zones = var.availability_zones != null ? var.availability_zones : slice(data.aws_availability_zones.available.names, 0, 3)
 

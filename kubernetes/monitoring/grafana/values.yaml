@@ -41,6 +41,15 @@ dashboardProviders:
         options:
           path: /var/lib/grafana/dashboards/custom
 
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    folder: /var/lib/grafana/dashboards/default
+    provider:
+      foldersFromFilesStructure: true
+
 resources:
   requests:
     cpu: 100m

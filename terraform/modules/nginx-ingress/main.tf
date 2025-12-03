@@ -30,4 +30,8 @@ resource "helm_release" "nginx_ingress" {
   }
 
   depends_on = [var.cluster_endpoint]
+
+  lifecycle {
+    ignore_changes = [version]
+  }
 }

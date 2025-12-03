@@ -109,6 +109,7 @@ variable "tags" {
 variable "acme_email" {
   description = "Email address for Let's Encrypt ACME registration (must be a valid email domain)"
   type        = string
+  default     = "admin@roodyadamsapp.com"
 
   validation {
     condition     = can(regex("^[^@]+@[^@]+\\.[^@]+$", var.acme_email)) && !can(regex("@example\\.com$", var.acme_email))

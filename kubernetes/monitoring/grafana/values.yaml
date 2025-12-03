@@ -4,7 +4,7 @@ adminPassword: admin
 persistence:
   enabled: true
   type: pvc
-  storageClassName: ""
+  storageClassName: "gp2"
   accessModes:
     - ReadWriteOnce
   size: 10Gi

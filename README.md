@@ -106,4 +106,3 @@ Prometheus serves as the core metrics collection and monitoring system for the p
 │   └── application.yml     # Application build and deploy
 └── .checkov.yml             # Security scanning configuration
 ```
-

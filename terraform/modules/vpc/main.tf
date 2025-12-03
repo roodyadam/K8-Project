@@ -82,6 +82,10 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
       Name = "${var.project_name}-${var.environment}-vpc-flow-logs"
     }
   )
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 resource "aws_iam_role" "vpc_flow_logs" {

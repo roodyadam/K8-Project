@@ -80,11 +80,6 @@ resource "aws_iam_role_policy_attachment" "node_group_elb_policy" {
   role       = aws_iam_role.node_group.name
 }
 
-resource "aws_iam_role_policy_attachment" "node_group_ebs_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.node_group.name
-}
-
 resource "aws_iam_policy" "cluster_autoscaler" {
   name        = "${var.project_name}-${var.environment}-cluster-autoscaler-policy"
   description = "Policy for cluster autoscaler"

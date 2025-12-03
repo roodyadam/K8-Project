@@ -31,6 +31,13 @@ resource "helm_release" "argocd" {
         ingress = {
           enabled = false
         }
+        extraArgs = [
+          "--insecure",
+          "--rootpath=/"
+        ]
+        config = {
+          url = "https://argocd.roodyadamsapp.com"
+        }
       }
     })
   ]

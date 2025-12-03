@@ -22,6 +22,10 @@ terraform {
       source  = "hashicorp/tls"
       version = "~> 4.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -99,6 +103,8 @@ data "aws_availability_zones" "available" {
 }
 
 data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
 
 module "vpc" {
   source = "./modules/vpc"
@@ -268,4 +274,55 @@ module "external_dns" {
   tags = var.tags
 
   depends_on = [module.eks]
+}
+
+resource "null_resource" "wait_for_eni_cleanup" {
+  triggers = {
+    vpc_name   = "eks-project-dev-vpc"
+    aws_region = "eu-west-2"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      set -e
+      VPC_NAME="${self.triggers.vpc_name}"
+      AWS_REGION="${self.triggers.aws_region}"
+      MAX_WAIT=600
+      ELAPSED=0
+      INTERVAL=10
+      
+      VPC_ID=$(aws ec2 describe-vpcs \
+        --filters "Name=tag:Name,Values=$VPC_NAME" "Name=state,Values=available" \
+        --query 'Vpcs[0].VpcId' \
+        --region $AWS_REGION \
+        --output text 2>/dev/null || echo "")
+      
+      if [ -z "$VPC_ID" ] || [ "$VPC_ID" = "None" ]; then
+        echo "VPC not found or already deleted. Skipping ENI cleanup."
+        exit 0
+      fi
+      
+      echo "Waiting for ENIs in VPC $VPC_ID to be released..."
+      
+      while [ $ELAPSED -lt $MAX_WAIT ]; do
+        ENI_COUNT=$(aws ec2 describe-network-interfaces \
+          --filters "Name=vpc-id,Values=$VPC_ID" "Name=status,Values=available,in-use" \
+          --query 'length(NetworkInterfaces)' \
+          --region $AWS_REGION \
+          --output text 2>/dev/null || echo "0")
+        
+        if [ "$ENI_COUNT" = "0" ]; then
+          echo "All ENIs released. Proceeding with VPC deletion."
+          exit 0
+        fi
+        
+        echo "Found $ENI_COUNT ENI(s) still in use. Waiting ${INTERVAL}s... (${ELAPSED}s/${MAX_WAIT}s)"
+        sleep $INTERVAL
+        ELAPSED=$((ELAPSED + INTERVAL))
+      done
+      
+      echo "Warning: Timeout waiting for ENIs to be released. Proceeding anyway."
+    EOT
+  }
 }

@@ -45,7 +45,6 @@ resource "aws_eks_cluster" "main" {
   )
 }
 
-# KMS Key for EKS encryption
 resource "aws_kms_key" "eks" {
   description             = "KMS key for EKS cluster encryption"
   deletion_window_in_days = 7
@@ -155,4 +154,3 @@ resource "aws_iam_openid_connect_provider" "eks" {
     }
   )
 }
-

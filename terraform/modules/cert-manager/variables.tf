@@ -8,5 +8,3 @@ variable "acme_email" {
   type        = string
   default     = "admin@example.com"
 }
-
-

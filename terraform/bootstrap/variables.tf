@@ -32,5 +32,3 @@ variable "github_repo" {
   type        = string
   default     = null
 }
-
-

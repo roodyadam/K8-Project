@@ -7,6 +7,3 @@ output "node_security_group_id" {
   description = "ID of the EKS node security group"
   value       = aws_security_group.node.id
 }
-
-
-

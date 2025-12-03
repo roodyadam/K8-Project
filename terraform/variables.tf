@@ -43,7 +43,7 @@ variable "enable_nat_gateway" {
 variable "single_nat_gateway" {
   description = "Use a single NAT Gateway for all private subnets (cost optimization)"
   type        = bool
-  default     = true # Default to true to avoid EIP limit issues
+  default     = true
 }
 
 variable "kubernetes_version" {
@@ -123,4 +123,3 @@ variable "external_dns_policy" {
   type        = string
   default     = "sync"
 }
-

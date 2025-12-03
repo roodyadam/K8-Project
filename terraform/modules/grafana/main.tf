@@ -57,4 +57,3 @@ resource "kubectl_manifest" "grafana_ingress" {
 
   yaml_body = file("${path.root}/../kubernetes/monitoring/grafana/ingress.yaml")
 }
-

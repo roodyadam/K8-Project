@@ -36,4 +36,3 @@ resource "kubectl_manifest" "nginx_servicemonitor" {
 
   yaml_body = file("${path.root}/../kubernetes/monitoring/prometheus/servicemonitor-nginx.yaml")
 }
-

@@ -5,7 +5,6 @@ image:
   tag: "01398fca9d4fd534826e3c307f55d25030bf8eb6"
   pullPolicy: Always
 
-nameOverride: ""
 fullnameOverride: "aim"
 
 service:
@@ -73,6 +72,3 @@ readinessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
-
-
-

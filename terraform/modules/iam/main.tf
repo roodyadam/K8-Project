@@ -7,7 +7,6 @@ terraform {
   }
 }
 
-# EKS Cluster IAM Role
 resource "aws_iam_role" "cluster" {
   name = "${var.project_name}-${var.environment}-eks-cluster-role"
 
@@ -32,13 +31,11 @@ resource "aws_iam_role" "cluster" {
   )
 }
 
-# Attach AWS managed policy for EKS Cluster
 resource "aws_iam_role_policy_attachment" "cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
   role       = aws_iam_role.cluster.name
 }
 
-# EKS Node Group IAM Role
 resource "aws_iam_role" "node_group" {
   name = "${var.project_name}-${var.environment}-eks-node-group-role"
 
@@ -63,7 +60,6 @@ resource "aws_iam_role" "node_group" {
   )
 }
 
-# Attach AWS managed policies for EKS Node Group
 resource "aws_iam_role_policy_attachment" "node_group_worker_node_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.node_group.name
@@ -89,7 +85,6 @@ resource "aws_iam_role_policy_attachment" "node_group_ebs_policy" {
   role       = aws_iam_role.node_group.name
 }
 
-# Additional IAM policy for cluster autoscaler (if enabled)
 resource "aws_iam_policy" "cluster_autoscaler" {
   name        = "${var.project_name}-${var.environment}-cluster-autoscaler-policy"
   description = "Policy for cluster autoscaler"
@@ -136,4 +131,3 @@ resource "aws_iam_role_policy_attachment" "node_group_cluster_autoscaler" {
   policy_arn = aws_iam_policy.cluster_autoscaler.arn
   role       = aws_iam_role.node_group.name
 }
-

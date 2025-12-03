@@ -161,4 +161,3 @@ resource "helm_release" "external_dns" {
     var.cluster_endpoint
   ]
 }
-

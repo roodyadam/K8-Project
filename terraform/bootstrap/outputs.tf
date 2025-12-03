@@ -22,5 +22,3 @@ output "github_oidc_provider_arn" {
   description = "ARN of the GitHub OIDC provider"
   value       = var.github_actions_role_name != null && var.github_repo != null ? aws_iam_openid_connect_provider.github[0].arn : null
 }
-
-

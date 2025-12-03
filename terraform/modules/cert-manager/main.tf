@@ -64,7 +64,6 @@ resource "kubectl_manifest" "letsencrypt_prod" {
     }
   })
 }
-
 resource "kubectl_manifest" "letsencrypt_staging" {
   depends_on = [helm_release.cert_manager]
 
@@ -94,4 +93,3 @@ resource "kubectl_manifest" "letsencrypt_staging" {
     }
   })
 }
-

@@ -198,11 +198,6 @@ resource "kubectl_manifest" "aws_auth" {
           userarn  = data.aws_caller_identity.current.arn
           username = "admin"
           groups   = ["system:masters"]
-        },
-        {
-          userarn  = "arn:aws:iam::147923156682:user/Radz"
-          username = "admin"
-          groups   = ["system:masters"]
         }
       ])
     }

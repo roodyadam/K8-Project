@@ -24,6 +24,11 @@ resource "helm_release" "argocd" {
 
   values = [
     yamlencode({
+      configs = {
+        secret = {
+          argocdServerAdminPassword = "$2a$10$U0JAoW.3.V7.W6kivYanw.inJXqDaU0RETE97noRfKK/INqdQma2O"
+        }
+      }
       server = {
         service = {
           type = "ClusterIP"

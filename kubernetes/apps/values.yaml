@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: "147923156682.dkr.ecr.eu-west-2.amazonaws.com/eks-project-aim"
-  tag: "5c519b80a323edfbf838a27c8df62b7e19fea54e"
+  tag: "6d1b2b33afbd8ee885633802a4d296fe5fa2ed9d"
   pullPolicy: Always
 
 nameOverride: ""

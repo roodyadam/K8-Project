@@ -7,13 +7,11 @@ terraform {
   }
 }
 
-# Security Group for EKS Cluster
 resource "aws_security_group" "cluster" {
   name        = "${var.project_name}-${var.environment}-eks-cluster-sg"
   description = "Security group for EKS cluster"
   vpc_id      = var.vpc_id
 
-  # Allow outbound traffic
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -30,13 +28,11 @@ resource "aws_security_group" "cluster" {
   )
 }
 
-# Security Group for EKS Nodes
 resource "aws_security_group" "node" {
   name        = "${var.project_name}-${var.environment}-eks-node-sg"
   description = "Security group for EKS nodes"
   vpc_id      = var.vpc_id
 
-  # Allow nodes to communicate with each other
   ingress {
     description = "Allow nodes to communicate with each other"
     from_port   = 0
@@ -45,7 +41,6 @@ resource "aws_security_group" "node" {
     self        = true
   }
 
-  # Allow inbound traffic from ALB/NLB
   ingress {
     description = "Allow inbound traffic from ALB/NLB"
     from_port   = 0
@@ -54,7 +49,6 @@ resource "aws_security_group" "node" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  # Allow SSH access from VPC (optional, for debugging)
   ingress {
     description = "Allow SSH access from VPC"
     from_port   = 22
@@ -63,7 +57,6 @@ resource "aws_security_group" "node" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  # Allow outbound traffic
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -80,9 +73,6 @@ resource "aws_security_group" "node" {
   )
 }
 
-# Security Group Rules (created separately to avoid circular dependency)
-
-# Allow nodes to communicate with cluster on port 443
 resource "aws_security_group_rule" "cluster_ingress_from_nodes" {
   description              = "Allow nodes to communicate with cluster"
   type                     = "ingress"
@@ -93,7 +83,6 @@ resource "aws_security_group_rule" "cluster_ingress_from_nodes" {
   security_group_id        = aws_security_group.cluster.id
 }
 
-# Allow cluster to communicate with nodes
 resource "aws_security_group_rule" "node_ingress_from_cluster" {
   description              = "Allow cluster to communicate with nodes"
   type                     = "ingress"

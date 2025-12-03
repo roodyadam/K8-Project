@@ -11,7 +11,6 @@ terraform {
   }
 }
 
-# EKS Cluster
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
   role_arn = var.cluster_service_role_arn
@@ -25,10 +24,8 @@ resource "aws_eks_cluster" "main" {
     public_access_cidrs     = var.public_access_cidrs
   }
 
-  # Enable control plane logging
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  # Encryption configuration
   encryption_config {
     provider {
       key_arn = aws_kms_key.eks.arn
@@ -97,7 +94,6 @@ resource "aws_kms_alias" "eks" {
   target_key_id = aws_kms_key.eks.key_id
 }
 
-# EKS Node Group
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.cluster_name}-node-group"
@@ -119,7 +115,6 @@ resource "aws_eks_node_group" "main" {
     max_unavailable = 1
   }
 
-  # Optional remote access configuration
   dynamic "remote_access" {
     for_each = var.ssh_key_name != "" ? [1] : []
     content {
@@ -144,7 +139,6 @@ resource "aws_eks_node_group" "main" {
   ]
 }
 
-# OIDC Identity Provider for IRSA
 data "tls_certificate" "eks" {
   url = aws_eks_cluster.main.identity[0].oidc[0].issuer
 }

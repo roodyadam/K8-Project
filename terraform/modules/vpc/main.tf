@@ -7,10 +7,8 @@ terraform {
   }
 }
 
-# Data source for current region
 data "aws_region" "current" {}
 
-# VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -24,7 +22,6 @@ resource "aws_vpc" "main" {
   )
 }
 
-# KMS Key for CloudWatch Logs encryption
 resource "aws_kms_key" "cloudwatch_logs" {
   description             = "KMS key for CloudWatch Logs encryption"
   deletion_window_in_days = 7
@@ -72,10 +69,8 @@ resource "aws_kms_alias" "cloudwatch_logs" {
   name          = "alias/${var.project_name}-${var.environment}-cloudwatch-logs"
   target_key_id = aws_kms_key.cloudwatch_logs.key_id
 
-  # Note: aws_kms_alias does not support tags
 }
 
-# CloudWatch Log Group for VPC Flow Logs
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flowlogs/${var.project_name}-${var.environment}"
   retention_in_days = 365
@@ -89,7 +84,6 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   )
 }
 
-# IAM Role for VPC Flow Logs
 resource "aws_iam_role" "vpc_flow_logs" {
   name = "${var.project_name}-${var.environment}-vpc-flow-logs-role"
 
@@ -114,7 +108,6 @@ resource "aws_iam_role" "vpc_flow_logs" {
   )
 }
 
-# IAM Policy for VPC Flow Logs
 resource "aws_iam_role_policy" "vpc_flow_logs" {
   name = "${var.project_name}-${var.environment}-vpc-flow-logs-policy"
   role = aws_iam_role.vpc_flow_logs.id
@@ -137,7 +130,6 @@ resource "aws_iam_role_policy" "vpc_flow_logs" {
   })
 }
 
-# VPC Flow Log
 resource "aws_flow_log" "main" {
   iam_role_arn    = aws_iam_role.vpc_flow_logs.arn
   log_destination = aws_cloudwatch_log_group.vpc_flow_logs.arn
@@ -152,7 +144,6 @@ resource "aws_flow_log" "main" {
   )
 }
 
-# Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -164,7 +155,6 @@ resource "aws_internet_gateway" "main" {
   )
 }
 
-# Public Subnets
 resource "aws_subnet" "public" {
   count = length(var.availability_zones)
 
@@ -183,7 +173,6 @@ resource "aws_subnet" "public" {
   )
 }
 
-# Private Subnets
 resource "aws_subnet" "private" {
   count = length(var.availability_zones)
 
@@ -201,7 +190,6 @@ resource "aws_subnet" "private" {
   )
 }
 
-# Elastic IPs for NAT Gateways
 resource "aws_eip" "nat" {
   count = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.availability_zones)) : 0
 
@@ -216,7 +204,6 @@ resource "aws_eip" "nat" {
   )
 }
 
-# NAT Gateways
 resource "aws_nat_gateway" "main" {
   count = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : length(var.availability_zones)) : 0
 
@@ -233,7 +220,6 @@ resource "aws_nat_gateway" "main" {
   depends_on = [aws_internet_gateway.main]
 }
 
-# Route Table for Public Subnets
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -250,7 +236,6 @@ resource "aws_route_table" "public" {
   )
 }
 
-# Route Table Associations for Public Subnets
 resource "aws_route_table_association" "public" {
   count = length(aws_subnet.public)
 
@@ -258,7 +243,6 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# Route Tables for Private Subnets
 resource "aws_route_table" "private" {
   count = var.enable_nat_gateway ? length(var.availability_zones) : 0
 
@@ -277,7 +261,6 @@ resource "aws_route_table" "private" {
   )
 }
 
-# Route Table Associations for Private Subnets
 resource "aws_route_table_association" "private" {
   count = length(aws_subnet.private)
 

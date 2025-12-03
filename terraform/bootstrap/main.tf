@@ -26,7 +26,6 @@ provider "aws" {
   }
 }
 
-# KMS Key for ECR encryption
 resource "aws_kms_key" "ecr" {
   description             = "KMS key for ECR repository encryption"
   deletion_window_in_days = 7
@@ -118,7 +117,6 @@ resource "aws_ecr_lifecycle_policy" "aim" {
   })
 }
 
-# GitHub OIDC Provider
 data "tls_certificate" "github" {
   count = var.github_actions_role_name != null && var.github_repo != null ? 1 : 0
   url   = "https://token.actions.githubusercontent.com"
@@ -138,7 +136,6 @@ resource "aws_iam_openid_connect_provider" "github" {
   }
 }
 
-# GitHub Actions IAM Role with OIDC trust
 resource "aws_iam_role" "github_actions" {
   count = var.github_actions_role_name != null && var.github_repo != null ? 1 : 0
   name  = var.github_actions_role_name
@@ -177,7 +174,6 @@ resource "aws_iam_role" "github_actions" {
   }
 }
 
-# ECR Policy for GitHub Actions
 resource "aws_iam_role_policy" "github_actions_ecr" {
   count = var.github_actions_role_name != null && var.github_repo != null ? 1 : 0
   name  = "ECRAccessPolicy"
@@ -211,5 +207,3 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
     ]
   })
 }
-
-

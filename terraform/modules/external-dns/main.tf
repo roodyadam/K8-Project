@@ -15,18 +15,15 @@ terraform {
   }
 }
 
-# Get EKS cluster OIDC issuer URL
 data "aws_eks_cluster" "main" {
   name = var.cluster_name
 }
 
-# Get OIDC provider ARN from cluster
 locals {
   oidc_provider_arn = var.oidc_provider_arn != null ? var.oidc_provider_arn : "arn:aws:iam::${var.aws_account_id}:oidc-provider/${replace(data.aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")}"
   oidc_issuer_url   = replace(data.aws_eks_cluster.main.identity[0].oidc[0].issuer, "https://", "")
 }
 
-# IAM Role for ExternalDNS Service Account (IRSA)
 resource "aws_iam_role" "external_dns" {
   name = "${var.project_name}-${var.environment}-external-dns-role"
 
@@ -56,11 +53,9 @@ resource "aws_iam_role" "external_dns" {
     }
   )
 
-  # Ensure OIDC provider exists before creating IAM role
   depends_on = [data.aws_eks_cluster.main]
 }
 
-# IAM Policy for ExternalDNS
 resource "aws_iam_policy" "external_dns" {
   name        = "${var.project_name}-${var.environment}-external-dns-policy"
   description = "Policy for ExternalDNS to manage Route 53 DNS records"

@@ -57,3 +57,9 @@ resource "kubectl_manifest" "grafana_ingress" {
 
   yaml_body = file("${path.root}/../kubernetes/monitoring/grafana/ingress.yaml")
 }
+
+resource "kubectl_manifest" "grafana_certificate" {
+  depends_on = [helm_release.grafana]
+
+  yaml_body = file("${path.root}/../kubernetes/monitoring/grafana/certificate.yaml")
+}

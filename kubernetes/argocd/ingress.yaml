@@ -11,6 +11,7 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
     nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
       more_set_headers "X-Forwarded-Proto: https";
       more_set_headers "X-Forwarded-Ssl: on";
 spec:

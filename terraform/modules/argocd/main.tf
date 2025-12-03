@@ -53,3 +53,8 @@ resource "kubectl_manifest" "argocd_ingress" {
   depends_on = [helm_release.argocd]
   yaml_body  = file("${path.root}/../kubernetes/argocd/ingress.yaml")
 }
+
+resource "kubectl_manifest" "argocd_certificate" {
+  depends_on = [helm_release.argocd]
+  yaml_body  = file("${path.root}/../kubernetes/argocd/certificate.yaml")
+}

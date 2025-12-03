@@ -35,7 +35,7 @@ ingress:
         - eks.roodyadamsapp.com
 
 persistence:
-  enabled: true
+  enabled: false
   storageClass: "gp2"
   accessMode: ReadWriteOnce
   size: 10Gi

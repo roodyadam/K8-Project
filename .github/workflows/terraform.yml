@@ -78,13 +78,31 @@ jobs:
         run: terraform plan -no-color -var="aws_region=${{ env.AWS_REGION }}" -out=tfplan
 
       - name: Terraform Apply
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'Apply')
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
         timeout-minutes: 30
         working-directory: ./terraform
         run: terraform apply -auto-approve -no-color tfplan
 
+      - name: Install kubectl
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        uses: azure/setup-kubectl@v3
+
+      - name: Diagnose NGINX Ingress Status
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        continue-on-error: true
+        run: |
+          aws eks update-kubeconfig --name eks-cluster --region ${{ env.AWS_REGION }}
+          echo "=== NGINX Ingress Pods ==="
+          kubectl get pods -n ingress-nginx || echo "Failed to get pods"
+          echo "=== NGINX Ingress Service ==="
+          kubectl get svc -n ingress-nginx || echo "Failed to get service"
+          echo "=== Service Details ==="
+          kubectl describe svc ingress-nginx-controller -n ingress-nginx || echo "Failed to describe service"
+          echo "=== LoadBalancer Check ==="
+          aws elb describe-load-balancers --region ${{ env.AWS_REGION }} --query 'LoadBalancerDescriptions[*].[LoadBalancerName,DNSName,State.Code]' --output table || echo "No LoadBalancers found"
+
       - name: Terraform Destroy
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'Destroy'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
         timeout-minutes: 30
         working-directory: ./terraform
         run: terraform destroy -auto-approve -no-color -var="aws_region=${{ env.AWS_REGION }}"

@@ -1,86 +1,81 @@
 {
-  "dashboard": {
-    "title": "Node Status Dashboard",
-    "tags": ["kubernetes", "nodes"],
-    "timezone": "browser",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Node Status",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
-            "legendFormat": "Ready"
-          },
-          {
-            "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"false\"})",
-            "legendFormat": "Not Ready"
-          }
-        ]
-      },
-      {
-        "id": 2,
-        "title": "Node CPU Usage",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-            "legendFormat": "{{instance}}"
-          }
-        ],
-        "yaxes": [
-          {"format": "percent", "label": "CPU %", "max": 100},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 3,
-        "title": "Node Memory Usage",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-            "legendFormat": "{{instance}}"
-          }
-        ],
-        "yaxes": [
-          {"format": "percent", "label": "Memory %", "max": 100},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 4,
-        "title": "Node Disk Usage",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100)",
-            "legendFormat": "{{instance}}"
-          }
-        ],
-        "yaxes": [
-          {"format": "percent", "label": "Disk %", "max": 100},
-          {"format": "short"}
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Node Resources",
-        "type": "table",
-        "targets": [
-          {
-            "expr": "kube_node_status_allocatable",
-            "format": "table"
-          }
-        ]
-      }
-    ],
-    "refresh": "30s",
-    "schemaVersion": 27,
-    "version": 1
-  }
+  "title": "Node Status Dashboard",
+  "tags": ["kubernetes", "nodes"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Node Status",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
+          "legendFormat": "Ready"
+        },
+        {
+          "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"false\"})",
+          "legendFormat": "Not Ready"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Node CPU Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "percent", "label": "CPU %", "max": 100},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Node Memory Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "percent", "label": "Memory %", "max": 100},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Node Disk Usage",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "yaxes": [
+        {"format": "percent", "label": "Disk %", "max": 100},
+        {"format": "short"}
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Node Resources",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "kube_node_status_allocatable",
+          "format": "table"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "version": 1
 }
-
-
-

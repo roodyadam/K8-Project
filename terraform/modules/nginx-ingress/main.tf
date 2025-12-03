@@ -54,7 +54,7 @@ resource "null_resource" "wait_for_loadbalancer_cleanup" {
   provisioner "local-exec" {
     when    = destroy
     command = <<-EOT
-      set -e
+      set +e
       AWS_REGION="${self.triggers.aws_region}"
       CLUSTER_NAME="${self.triggers.cluster_name}"
       VPC_NAME="${self.triggers.vpc_name}"
@@ -75,7 +75,7 @@ resource "null_resource" "wait_for_loadbalancer_cleanup" {
         
         if [ -n "$ELB_LIST" ] && [ "$ELB_LIST" != "None" ]; then
           for ELB in $ELB_LIST; do
-            aws elb delete-load-balancer --load-balancer-name "$ELB" --region "$AWS_REGION" || true
+            aws elb delete-load-balancer --load-balancer-name "$ELB" --region "$AWS_REGION" 2>&1 || true
           done
         fi
         
@@ -86,13 +86,13 @@ resource "null_resource" "wait_for_loadbalancer_cleanup" {
           for SG in $SG_LIST; do
             ENI_COUNT=$(aws ec2 describe-network-interfaces --filters "Name=group-id,Values=$SG" \
               --region "$AWS_REGION" --query 'length(NetworkInterfaces)' --output text 2>/dev/null || echo "0")
-            if [ "$ENI_COUNT" = "0" ]; then
-              aws ec2 delete-security-group --group-id "$SG" --region "$AWS_REGION" || true
+            if [ "$ENI_COUNT" = "0" ] || [ -z "$ENI_COUNT" ]; then
+              aws ec2 delete-security-group --group-id "$SG" --region "$AWS_REGION" 2>&1 || true
             fi
           done
         fi
         
-        sleep 10
+        sleep 5
       fi
     EOT
   }

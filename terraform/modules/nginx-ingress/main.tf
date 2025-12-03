@@ -77,8 +77,22 @@ resource "null_resource" "wait_for_loadbalancer_cleanup" {
           for ELB in $ELB_LIST; do
             aws elb delete-load-balancer --load-balancer-name "$ELB" --region "$AWS_REGION" || true
           done
-          sleep 30
         fi
+        
+        SG_LIST=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$VPC_ID" "Name=group-name,Values=k8s-elb-*" \
+          --query 'SecurityGroups[*].GroupId' --region "$AWS_REGION" --output text 2>/dev/null || echo "")
+        
+        if [ -n "$SG_LIST" ] && [ "$SG_LIST" != "None" ]; then
+          for SG in $SG_LIST; do
+            ENI_COUNT=$(aws ec2 describe-network-interfaces --filters "Name=group-id,Values=$SG" \
+              --region "$AWS_REGION" --query 'length(NetworkInterfaces)' --output text 2>/dev/null || echo "0")
+            if [ "$ENI_COUNT" = "0" ]; then
+              aws ec2 delete-security-group --group-id "$SG" --region "$AWS_REGION" || true
+            fi
+          done
+        fi
+        
+        sleep 10
       fi
     EOT
   }

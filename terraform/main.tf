@@ -194,7 +194,7 @@ resource "kubectl_manifest" "aws_auth" {
       ])
       mapUsers = yamlencode([
         {
-          userarn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+          userarn  = data.aws_caller_identity.current.arn
           username = "admin"
           groups   = ["system:masters"]
         }

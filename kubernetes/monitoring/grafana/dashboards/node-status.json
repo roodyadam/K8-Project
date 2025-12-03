@@ -7,6 +7,7 @@
       "id": 1,
       "title": "Node Status",
       "type": "stat",
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
       "targets": [
         {
           "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
@@ -22,6 +23,7 @@
       "id": 2,
       "title": "Node CPU Usage",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "targets": [
         {
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
@@ -37,6 +39,7 @@
       "id": 3,
       "title": "Node Memory Usage",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
       "targets": [
         {
           "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
@@ -52,6 +55,7 @@
       "id": 4,
       "title": "Node Disk Usage",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
       "targets": [
         {
           "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100)",
@@ -67,6 +71,7 @@
       "id": 5,
       "title": "Node Resources",
       "type": "table",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
       "targets": [
         {
           "expr": "kube_node_status_allocatable",

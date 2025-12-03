@@ -7,6 +7,7 @@
       "id": 1,
       "title": "Ingress Requests Rate",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
       "targets": [
         {
           "expr": "sum(rate(nginx_ingress_controller_requests[5m])) by (ingress, namespace)",
@@ -22,6 +23,7 @@
       "id": 2,
       "title": "Ingress Request Duration",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket[5m])) by (le, ingress, namespace))",
@@ -41,6 +43,7 @@
       "id": 3,
       "title": "HTTP Status Codes",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
       "targets": [
         {
           "expr": "sum(rate(nginx_ingress_controller_requests{status=~\"2..\"}[5m])) by (ingress, namespace)",
@@ -64,6 +67,7 @@
       "id": 4,
       "title": "Ingress Traffic (Bytes)",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
       "targets": [
         {
           "expr": "sum(rate(nginx_ingress_controller_bytes_sent_sum[5m])) by (ingress, namespace)",
@@ -83,6 +87,7 @@
       "id": 5,
       "title": "Active Connections",
       "type": "graph",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
       "targets": [
         {
           "expr": "nginx_ingress_controller_connections{state=\"active\"}",

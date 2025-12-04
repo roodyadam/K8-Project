@@ -83,13 +83,16 @@ jobs:
         run: |
           kubectl delete svc --all-namespaces --field-selector spec.type=LoadBalancer --wait=true --timeout=300s 2>&1 || true
           sleep 30
-          VPC_ID=$(aws eks describe-cluster --name eks-cluster --region ${{ env.AWS_REGION }} --query 'cluster.resourcesVpcConfig.vpcId' --output text 2>/dev/null || echo "")
+          VPC_ID=$(aws eks describe-cluster --name eks-cluster --region ${{ env.AWS_REGION }} --query 'cluster.resourcesVpcConfig.vpcId' --output text 2>/dev/null || \
+                   aws ec2 describe-vpcs --filters "Name=tag:Name,Values=eks-project-dev-vpc" --query 'Vpcs[0].VpcId' --output text --region ${{ env.AWS_REGION }} 2>/dev/null || echo "")
           if [ -n "$VPC_ID" ]; then
+            for LB_ARN in $(aws elbv2 describe-load-balancers --region ${{ env.AWS_REGION }} --query "LoadBalancers[?VpcId=='$VPC_ID'].LoadBalancerArn" --output text 2>/dev/null || true); do
+              [ -n "$LB_ARN" ] && aws elbv2 delete-load-balancer --load-balancer-arn "$LB_ARN" --region ${{ env.AWS_REGION }} 2>&1 || true
+            done
+            sleep 60
             for SG in $(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$VPC_ID" "Name=group-name,Values=k8s-*" --query 'SecurityGroups[*].GroupId' --output text --region ${{ env.AWS_REGION }} 2>/dev/null || true); do
-              if [ -n "$SG" ]; then
-                ENI_COUNT=$(aws ec2 describe-network-interfaces --filters "Name=group-id,Values=$SG" --query 'length(NetworkInterfaces)' --output text --region ${{ env.AWS_REGION }} 2>/dev/null || echo "1")
-                [ "$ENI_COUNT" = "0" ] && aws ec2 delete-security-group --group-id "$SG" --region ${{ env.AWS_REGION }} 2>&1 || true
-              fi
+              [ -n "$SG" ] && [ "$(aws ec2 describe-network-interfaces --filters "Name=group-id,Values=$SG" --query 'length(NetworkInterfaces)' --output text --region ${{ env.AWS_REGION }} 2>/dev/null || echo 1)" = "0" ] && \
+                aws ec2 delete-security-group --group-id "$SG" --region ${{ env.AWS_REGION }} 2>&1 || true
             done
           fi
 

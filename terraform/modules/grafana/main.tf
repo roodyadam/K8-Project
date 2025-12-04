@@ -27,8 +27,6 @@ resource "helm_release" "grafana" {
   values = [
     file("${path.root}/../kubernetes/monitoring/grafana/values.yaml")
   ]
-
-  depends_on = [var.prometheus_service]
 }
 
 resource "kubectl_manifest" "grafana_dashboards" {

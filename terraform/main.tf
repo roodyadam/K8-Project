@@ -22,10 +22,6 @@ terraform {
       source  = "hashicorp/tls"
       version = "~> 4.0"
     }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.0"
-    }
   }
 }
 
@@ -219,10 +215,6 @@ module "nginx_ingress" {
   source = "./modules/nginx-ingress"
 
   cluster_endpoint = module.eks.cluster_endpoint
-  aws_region       = var.aws_region
-  cluster_name     = var.cluster_name
-  project_name     = var.project_name
-  environment      = var.environment
 
   depends_on = [module.eks]
 }
@@ -247,8 +239,6 @@ module "prometheus" {
 
 module "grafana" {
   source = "./modules/grafana"
-
-  prometheus_service = module.prometheus.prometheus_service
 
   depends_on = [module.prometheus]
 }

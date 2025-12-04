@@ -207,3 +207,68 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
     ]
   })
 }
+
+resource "aws_kms_key" "vpc_flow_logs" {
+  description             = "KMS key for VPC Flow Logs CloudWatch encryption"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${var.aws_account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow CloudWatch Logs to use the key"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${var.aws_region}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name      = "${var.project_name}-${var.environment}-vpc-flow-logs-kms-key"
+    Project   = var.project_name
+    Type      = "Bootstrap"
+    ManagedBy = "Terraform"
+  }
+}
+
+resource "aws_kms_alias" "vpc_flow_logs" {
+  name          = "alias/${var.project_name}-${var.environment}-vpc-flow-logs"
+  target_key_id = aws_kms_key.vpc_flow_logs.key_id
+}
+
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  name              = "/aws/vpc/flowlogs/${var.project_name}-${var.environment}"
+  retention_in_days = 365
+  kms_key_id        = aws_kms_key.vpc_flow_logs.arn
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = {
+    Name      = "${var.project_name}-${var.environment}-vpc-flow-logs"
+    Project   = var.project_name
+    Type      = "Bootstrap"
+    ManagedBy = "Terraform"
+  }
+}

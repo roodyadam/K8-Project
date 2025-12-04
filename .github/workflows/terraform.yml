@@ -68,6 +68,36 @@ jobs:
         working-directory: ./terraform
         run: terraform fmt -check -recursive
 
+      - name: Setup kubectl
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl for EKS
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name eks-cluster
+
+      - name: Delete Kubernetes LoadBalancer Services
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        timeout-minutes: 10
+        run: |
+          echo "Deleting all LoadBalancer services..."
+          kubectl delete svc --all-namespaces --field-selector spec.type=LoadBalancer --wait=true --timeout=300s 2>&1 || true
+          
+          echo "Waiting for AWS Load Balancers to be deleted..."
+          sleep 30
+          
+          echo "Cleaning up orphaned security groups..."
+          VPC_ID=$(aws eks describe-cluster --name eks-cluster --region ${{ env.AWS_REGION }} --query 'cluster.resourcesVpcConfig.vpcId' --output text 2>/dev/null || echo "")
+          if [ -n "$VPC_ID" ] && [ "$VPC_ID" != "None" ]; then
+            for SG in $(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$VPC_ID" "Name=group-name,Values=k8s-*" --query 'SecurityGroups[*].GroupId' --output text --region ${{ env.AWS_REGION }} 2>/dev/null || true); do
+              if [ -n "$SG" ] && [ "$SG" != "None" ]; then
+                ENI_COUNT=$(aws ec2 describe-network-interfaces --filters "Name=group-id,Values=$SG" --query 'length(NetworkInterfaces)' --output text --region ${{ env.AWS_REGION }} 2>/dev/null || echo "1")
+                [ "$ENI_COUNT" = "0" ] && aws ec2 delete-security-group --group-id "$SG" --region ${{ env.AWS_REGION }} 2>&1 || true
+              fi
+            done
+          fi
+
       - name: Terraform Plan
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'destroy'
         timeout-minutes: 10

@@ -9,7 +9,7 @@ metadata:
 spec:
   secretName: {{ .secretName }}
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
     {{- range .hosts }}

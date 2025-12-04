@@ -6,7 +6,7 @@ metadata:
 spec:
   secretName: grafana-tls
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
     - grafana.roodyadamsapp.com

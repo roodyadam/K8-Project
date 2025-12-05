@@ -26,7 +26,7 @@ resource "helm_release" "argocd" {
     yamlencode({
       configs = {
         secret = {
-          argocdServerAdminPassword = "$2a$10$U0JAoW.3.V7.W6kivYanw.inJXqDaU0RETE97noRfKK/INqdQma2O"
+          argocdServerAdminPassword = var.argocd_admin_password_bcrypt
         }
       }
       server = {

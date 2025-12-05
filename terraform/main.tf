@@ -222,9 +222,10 @@ module "nginx_ingress" {
 module "argocd" {
   source = "./modules/argocd"
 
-  cluster_endpoint = module.eks.cluster_endpoint
-  cluster_name     = var.cluster_name
-  aws_region       = var.aws_region
+  cluster_endpoint             = module.eks.cluster_endpoint
+  cluster_name                 = var.cluster_name
+  aws_region                   = var.aws_region
+  argocd_admin_password_bcrypt = var.argocd_admin_password_bcrypt
 
   depends_on = [module.eks, module.nginx_ingress]
 }

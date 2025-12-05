@@ -100,16 +100,22 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'destroy'
         timeout-minutes: 10
         working-directory: ./terraform
+        env:
+          TF_VAR_argocd_admin_password_bcrypt: ${{ secrets.ARGOCD_ADMIN_PASSWORD_BCRYPT }}
         run: terraform plan -no-color -var="aws_region=${{ env.AWS_REGION }}" -out=tfplan
 
       - name: Terraform Apply
         if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
         timeout-minutes: 30
         working-directory: ./terraform
+        env:
+          TF_VAR_argocd_admin_password_bcrypt: ${{ secrets.ARGOCD_ADMIN_PASSWORD_BCRYPT }}
         run: terraform apply -auto-approve -no-color tfplan
 
       - name: Terraform Destroy
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
         timeout-minutes: 30
         working-directory: ./terraform
+        env:
+          TF_VAR_argocd_admin_password_bcrypt: ${{ secrets.ARGOCD_ADMIN_PASSWORD_BCRYPT }}
         run: terraform destroy -auto-approve -no-color -var="aws_region=${{ env.AWS_REGION }}"

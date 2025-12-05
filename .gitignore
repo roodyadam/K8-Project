@@ -44,7 +44,9 @@ override.tf.json
 terraform.rc
 *.tfplan
 tfplan
-# Terraform lock files in modules (root lock file is sufficient)
+# Terraform lock files
+.terraform.lock.hcl
+terraform.lock.hcl
 **/modules/**/.terraform.lock.hcl
 
 # Kubernetes

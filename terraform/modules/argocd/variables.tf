@@ -9,3 +9,9 @@ variable "cluster_name" {
 variable "aws_region" {
   type = string
 }
+
+variable "argocd_admin_password_bcrypt" {
+  description = "Bcrypt-hashed password for ArgoCD admin user"
+  type        = string
+  sensitive   = true
+}

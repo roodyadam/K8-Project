@@ -128,3 +128,10 @@ variable "external_dns_policy" {
   type        = string
   default     = "sync"
 }
+
+variable "argocd_admin_password_bcrypt" {
+  description = "Bcrypt-hashed password for ArgoCD admin user"
+  type        = string
+  sensitive   = true
+  # No default - must be provided via terraform.tfvars or environment variable
+}

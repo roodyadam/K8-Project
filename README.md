@@ -95,6 +95,7 @@ While EBS volumes provide persistent storage for application data and Prometheus
 - GitHub repository with Actions enabled
 - AWS credentials configured (for local development)
 
+
 ## Project Structure
 
 ```

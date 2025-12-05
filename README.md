@@ -80,6 +80,12 @@ These enhancements would demonstrate advanced understanding of defense-in-depth 
 ### Container Security
 The application container currently runs with default permissions. A production enhancement would implement the principle of least privilege by running containers as a non-root user. This involves creating a dedicated user in the Dockerfile and configuring the container to run with that user's permissions, significantly reducing the attack surface in the event of a container compromise.
 
+### Resource Management
+Currently, namespaces can consume unlimited cluster resources, which could lead to resource exhaustion if one workload (e.g., Prometheus) consumes excessive CPU or memory. A production enhancement would implement Resource Quotas to enforce limits per namespace, ensuring fair resource allocation and preventing any single workload from starving others. This would protect application pods from resource contention and improve overall cluster stability and predictability.
+
+### Data Protection
+While EBS volumes provide persistent storage for application data and Prometheus metrics, there's currently no automated backup strategy. A production enhancement would implement AWS Backup Service or automated EBS snapshot policies to protect against data loss from accidental deletion, volume corruption, or disaster scenarios. This would enable point-in-time recovery, meet compliance requirements, and ensure business continuity with configurable retention policies and cross-region backup capabilities.
+
 ## Prerequisites
 
 - AWS Account with appropriate permissions

@@ -49,6 +49,10 @@ tfplan
 terraform.lock.hcl
 **/modules/**/.terraform.lock.hcl
 
+# Security scanning configs
+.trivyignore
+.checkov.yml
+
 # Kubernetes
 *.kubeconfig
 

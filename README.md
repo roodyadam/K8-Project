@@ -77,6 +77,9 @@ Currently, the EKS API endpoint is configured with public access (`public_access
 
 These enhancements would demonstrate advanced understanding of defense-in-depth security principles and network segmentation strategies in cloud-native environments.
 
+### Container Security
+The application container currently runs with default permissions. A production enhancement would implement the principle of least privilege by running containers as a non-root user. This involves creating a dedicated user in the Dockerfile and configuring the container to run with that user's permissions, significantly reducing the attack surface in the event of a container compromise.
+
 ## Prerequisites
 
 - AWS Account with appropriate permissions

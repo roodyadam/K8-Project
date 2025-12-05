@@ -66,6 +66,17 @@ Prometheus serves as the core metrics collection and monitoring system for the p
 - Git as the single source of truth for infrastructure and application state
 - Automated synchronization of cluster state with Git repository
 
+## Future Enhancements
+
+### EKS Endpoint Security
+Currently, the EKS API endpoint is configured with public access (`public_access_cidrs = ["0.0.0.0/0"]`) for operational simplicity. While this is secured through IAM authentication and Kubernetes RBAC, a production enhancement would implement more restrictive network access controls. This could include:
+
+- **IP-based restrictions**: Restricting access to specific trusted IP addresses (e.g., office/home IPs) using CIDR blocks
+- **Dynamic GitHub Actions IP management**: Automatically fetching and updating GitHub Actions IP ranges from `api.github.com/meta` to ensure CI/CD pipelines continue functioning while maintaining security
+- **VPC endpoints**: Implementing AWS PrivateLink VPC endpoints to enable private connectivity between GitHub Actions runners and the EKS cluster, eliminating public internet exposure entirely
+
+These enhancements would demonstrate advanced understanding of defense-in-depth security principles and network segmentation strategies in cloud-native environments.
+
 ## Prerequisites
 
 - AWS Account with appropriate permissions
